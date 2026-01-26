@@ -72,7 +72,8 @@ export function Header() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           {/* LEFT */}
           <div className="flex items-center gap-3">
-            {hasBack() && (
+            {/* Just Commenting Out for Now Until we figure out how to handle back button */}
+            {/* {hasBack() && (
               <button
                 onClick={() => {
                   const prev = pop();
@@ -87,7 +88,7 @@ export function Header() {
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
-            )}
+            )} */}
 
             <Link href="/">
               <span className="text-lg font-light cursor-pointer whitespace-nowrap">
