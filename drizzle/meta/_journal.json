@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1768585821947,
+      "tag": "0000_real_silver_sable",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1768585974004,
+      "tag": "0001_loose_sharon_ventura",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1768586009268,
+      "tag": "0002_fantastic_tana_nile",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1768605953103,
+      "tag": "0003_fresh_bishop",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1768655925748,
+      "tag": "0004_dazzling_sersi",
+      "breakpoints": true
+    }
+  ]
+}
