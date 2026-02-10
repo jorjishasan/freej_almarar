@@ -26,6 +26,8 @@ import { Badge } from "@/components/ui/badge";
 import { getLocalizedContent } from "@shared/language";
 import { toast } from "sonner";
 
+import { AddPoemDialog } from "@/components/admin/AddPoemDialog";
+
 export default function Admin() {
   const { user, loading } = useAuth();
   const { language, t } = useLanguage();
@@ -307,16 +309,18 @@ function PoemsManagement({ language, t }: any) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>{t("poems")}</CardTitle>
-            <CardDescription>Manage literary heritage and poetry collection</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>{t("poems")}</CardTitle>
+              <CardDescription>Manage literary heritage and poetry collection</CardDescription>
+            </div>
+            <AddPoemDialog>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Poem
+              </Button>
+            </AddPoemDialog>
           </div>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Poem
-          </Button>
-        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
