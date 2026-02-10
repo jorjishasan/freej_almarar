@@ -52,8 +52,9 @@ const figuresFilters: FilterConfig[] = [
     type: "select",
     label: "Category",
     labelAr: "التصنيف",
+    placeholder: "All categories",
+    placeholderAr: "جميع التصنيفات",
     options: [
-      { value: "", label: "All categories", labelAr: "جميع التصنيفات" },
       { value: "leadership", label: "Leadership", labelAr: "القيادة" },
       { value: "culture", label: "Culture", labelAr: "الثقافة" },
       { value: "commerce", label: "Commerce", labelAr: "التجارة" },
@@ -66,8 +67,9 @@ const figuresFilters: FilterConfig[] = [
     type: "select",
     label: "Era",
     labelAr: "الحقبة",
+    placeholder: "All eras",
+    placeholderAr: "جميع الحقب",
     options: [
-      { value: "", label: "All eras", labelAr: "جميع الحقب" },
       { value: "pre-1900", label: "Pre-1900", labelAr: "قبل 1900" },
       { value: "1900-1950", label: "1900-1950", labelAr: "1900-1950" },
       { value: "1950-2000", label: "1950-2000", labelAr: "1950-2000" },

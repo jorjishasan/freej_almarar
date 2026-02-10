@@ -52,8 +52,9 @@ const ferjanFilters: FilterConfig[] = [
     type: "select",
     label: "Region",
     labelAr: "المنطقة",
+    placeholder: "All regions",
+    placeholderAr: "جميع المناطق",
     options: [
-      { value: "", label: "All regions", labelAr: "جميع المناطق" },
       { value: "coastal", label: "Coastal", labelAr: "ساحلية" },
       { value: "northern", label: "Northern", labelAr: "شمالية" },
       { value: "southern", label: "Southern", labelAr: "جنوبية" },
@@ -65,8 +66,9 @@ const ferjanFilters: FilterConfig[] = [
     type: "select",
     label: "Type",
     labelAr: "النوع",
+    placeholder: "All types",
+    placeholderAr: "جميع الأنواع",
     options: [
-      { value: "", label: "All types", labelAr: "جميع الأنواع" },
       { value: "settlement", label: "Settlement", labelAr: "مستوطنة" },
       { value: "encampment", label: "Encampment", labelAr: "مخيم" },
       { value: "territory", label: "Territory", labelAr: "إقليم" },

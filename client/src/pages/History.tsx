@@ -47,8 +47,9 @@ const historyFilters: FilterConfig[] = [
     type: "select",
     label: "Time Period",
     labelAr: "الفترة الزمنية",
+    placeholder: "All periods",
+    placeholderAr: "جميع الفترات",
     options: [
-      { value: "", label: "All periods", labelAr: "جميع الفترات" },
       { value: "1900s", label: "1900s", labelAr: "القرن العشرين" },
       { value: "1950s", label: "1950s", labelAr: "الخمسينيات" },
       { value: "1970s", label: "1970s", labelAr: "السبعينيات" },
@@ -61,8 +62,9 @@ const historyFilters: FilterConfig[] = [
     type: "select",
     label: "Category",
     labelAr: "التصنيف",
+    placeholder: "All categories",
+    placeholderAr: "جميع التصنيفات",
     options: [
-      { value: "", label: "All categories", labelAr: "جميع التصنيفات" },
       { value: "origins", label: "Origins", labelAr: "الأصول" },
       { value: "daily-life", label: "Daily Life", labelAr: "الحياة اليومية" },
       { value: "modernization", label: "Modernization", labelAr: "التحديث" },

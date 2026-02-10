@@ -38,8 +38,9 @@ const archiveFilters: FilterConfig[] = [
     type: "select",
     label: "Type",
     labelAr: "النوع",
+    placeholder: "All types",
+    placeholderAr: "جميع الأنواع",
     options: [
-      { value: "", label: "All types", labelAr: "جميع الأنواع" },
       { value: "documents", label: "Documents", labelAr: "الوثائق" },
       { value: "photographs", label: "Photographs", labelAr: "الصور" },
     ],
@@ -49,8 +50,9 @@ const archiveFilters: FilterConfig[] = [
     type: "select",
     label: "Period",
     labelAr: "الفترة",
+    placeholder: "All periods",
+    placeholderAr: "جميع الفترات",
     options: [
-      { value: "", label: "All periods", labelAr: "جميع الفترات" },
       { value: "pre-1950", label: "Pre-1950", labelAr: "قبل 1950" },
       { value: "1950-1970", label: "1950-1970", labelAr: "1950-1970" },
       { value: "1970-1990", label: "1970-1990", labelAr: "1970-1990" },
