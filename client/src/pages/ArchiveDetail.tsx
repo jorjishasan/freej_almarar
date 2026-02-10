@@ -5,17 +5,26 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Link, useRoute } from "wouter";
+import { Link, useLocation, useRoute } from "wouter";
 import { getLocalizedContent } from "@shared/language";
 import { ArrowLeft, Calendar, MapPin, Tag, Download } from "lucide-react";
 
 export default function ArchiveDetail() {
   const { language, t } = useLanguage();
   const [, params] = useRoute("/archives/:slug");
+  const [, setLocation] = useLocation();
   const { data: item, isLoading } = trpc.archives.getBySlug.useQuery(
     { slug: params?.slug || "" },
     { enabled: !!params?.slug }
   );
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      setLocation("/");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -30,12 +39,10 @@ export default function ArchiveDetail() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <h1 className="text-2xl font-light mb-4 text-foreground">{t("noResults")}</h1>
-          <Link href="/archives">
-            <Button variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {language === "en" ? "Back to Archives" : "العودة إلى الأرشيف"}
-            </Button>
-          </Link>
+          <Button variant="outline" onClick={handleBack}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {language === "en" ? "Back to Previous" : "العودة للصفحة السابقة"}
+          </Button>
         </div>
       </div>
     );
@@ -77,12 +84,10 @@ export default function ArchiveDetail() {
         <div className="container">
           <div className="max-w-4xl mx-auto">
             {/* Back button */}
-            <Link href="/archive/documents">
-              <Button variant="ghost" className="mb-8 -ml-4">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                {language === "en" ? "Back to Documents" : "العودة إلى الوثائق"}
-              </Button>
-            </Link>
+            <Button variant="ghost" className="mb-8 -ml-4" onClick={handleBack}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {language === "en" ? "Back to Previous" : "العودة للصفحة السابقة"}
+            </Button>
 
             {/* Title */}
             <h1 className="text-4xl md:text-5xl font-light mb-6 text-foreground leading-tight">
