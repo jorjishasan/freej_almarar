@@ -22,6 +22,8 @@ import Documents from "./pages/Documents";
 import ArchiveHub from "./pages/ArchiveHub";
 import Ferjan from "./pages/Ferjan";
 import Figures from "./pages/Figures";
+import Poets from "./pages/Poets";
+import LoadingPage from "./pages/Loading";
 import FamilyTree from "./pages/FamilyTree";
 import FamilyTreeSection from "./pages/FamilyTreeSection";
 import FamilyTreeFamily from "./pages/FamilyTreeFamily";
@@ -67,6 +69,10 @@ function Router() {
       {/* Figures (Tier 1) */}
       <Route path={"/figures"} component={Figures} />
       <Route path={"/figures/:slug"} component={ArchiveDetail} /> {/* TODO: Create FigureDetail */}
+
+      {/* Poets (Tier 1) */}
+      <Route path={"/poets"} component={Poets} />
+      <Route path={"/loading"} component={LoadingPage} />
 
       {/* Legacy lineage URLs - redirect to new paths */}
       <Route path={"/lineage"}>

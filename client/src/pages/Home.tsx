@@ -56,6 +56,14 @@ const tier1Collections = [
     image: "/images/aerial-5.jpg",
   },
   {
+    title: "Poets",
+    titleAr: "الشعراء",
+    description: "Poets of the tribe",
+    descriptionAr: "شعراء القبيلة",
+    path: "/poets",
+    image: "/images/aerial-2.jpg",
+  },
+  {
     title: "Poems",
     titleAr: "القصائد",
     description: "Poetry and oral traditions",
