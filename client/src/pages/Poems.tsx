@@ -3,6 +3,7 @@ import { FileText } from "lucide-react";
 import { SectionLayout, FilterConfig, FilterValues, createDefaultFilterValues } from "@/components/SectionLayout";
 import { EmptyState } from "@/components/EmptyState";
 import { useFilters } from "@/hooks/useFilters";
+import { AddPoemDialog } from "@/components/admin/AddPoemDialog";
 
 // Sample poem data for demonstration
 const samplePoems = [
@@ -158,37 +159,42 @@ export default function Poems() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPoems.map((poem) => (
-            <div
+            <AddPoemDialog
               key={poem.id}
-              className="group bg-card border border-border rounded-xl p-6 hover:shadow-lg hover:border-primary/30 transition-all cursor-pointer"
-              onClick={() => navigate(`/poems/${poem.id}`)}
+              prefillPoem={{
+                title: poem.title,
+                tags: poem.tags,
+                verses: [poem.excerpt],
+              }}
             >
-              <div className="flex items-start justify-between mb-3">
-                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                  {poem.period}
-                </span>
-                <FileText className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-              </div>
-              <h3 className="text-xl font-light mb-2 group-hover:text-primary transition-colors">
-                {poem.title}
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                {poem.author}
-              </p>
-              <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
-                {poem.excerpt}
-              </p>
-              <div className="flex flex-wrap gap-1.5 mt-4">
-                {poem.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded"
-                  >
-                    {tag}
+              <div className="group bg-card border border-border rounded-xl p-6 hover:shadow-lg hover:border-primary/30 transition-all cursor-pointer">
+                <div className="flex items-start justify-between mb-3">
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                    {poem.period}
                   </span>
-                ))}
+                  <FileText className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
+                <h3 className="text-xl font-light mb-2 group-hover:text-primary transition-colors">
+                  {poem.title}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {poem.author}
+                </p>
+                <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+                  {poem.excerpt}
+                </p>
+                <div className="flex flex-wrap gap-1.5 mt-4">
+                  {poem.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
+            </AddPoemDialog>
           ))}
         </div>
       )}
