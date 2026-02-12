@@ -36,6 +36,20 @@
       "when": 1768655925748,
       "tag": "0004_dazzling_sersi",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1770920336726,
+      "tag": "0005_freezing_shockwave",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1770920373885,
+      "tag": "0006_light_doctor_strange",
+      "breakpoints": true
     }
   ]
 }

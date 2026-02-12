@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,23 +26,15 @@ import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
-// --- Schema ---
-const poemFormSchema = z.object({
-  title: z.string().optional(),
-  status: z.enum(["draft", "published"]),
-  verses: z
-    .array(
-      z.object({
-        text: z.string(),
-      })
-    )
-    .min(1, "At least one verse is required"),
-  poetId: z.string().min(1, "Poet is required"),
-  tags: z.array(z.string()).default([]),
-  description: z.string().optional(),
-});
-
-type PoemFormValues = z.infer<typeof poemFormSchema>;
+// --- Form Types ---
+type PoemFormValues = {
+  title?: string;
+  status: "draft" | "published";
+  verses: Array<{ text: string }>;
+  poetId: string;
+  tags: string[];
+  description?: string;
+};
 
 const STORAGE_KEY = "poem-draft-v1";
 
@@ -86,8 +76,7 @@ export function AddPoemDialog({
     return [{ text: "" }, { text: "" }, { text: "" }, { text: "" }];
   };
 
-  const form = useForm<any>({
-    resolver: zodResolver(poemFormSchema),
+  const form = useForm<PoemFormValues>({
     defaultValues: {
       title: "",
       status: "draft",
@@ -96,6 +85,7 @@ export function AddPoemDialog({
       tags: [],
       description: "",
     },
+    mode: "onChange",
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -162,12 +152,18 @@ export function AddPoemDialog({
   });
 
   const onSubmit = (data: PoemFormValues) => {
+    // Validation
+    if (!data.poetId || data.poetId.trim() === "") {
+      form.setError("poetId", { message: "Poet is required" });
+      return;
+    }
+
     // Transform data for API
     // verses array -> newline separated string for content
     const content = data.verses.map(v => v.text).filter(t => t.trim() !== "").join("\n");
     
     if (!content) {
-      form.setError("root", { message: "Poem content cannot be empty" });
+      form.setError("verses", { message: "At least one verse is required" });
       return;
     }
 
@@ -289,7 +285,12 @@ export function AddPoemDialog({
 
               {/* Verses Grid */}
               <div className="space-y-4">
-                <FormLabel className="text-base font-light text-foreground">Poem Verses</FormLabel>
+                <div className="flex items-baseline justify-between">
+                  <FormLabel className="text-base font-light text-foreground">Poem Verses *</FormLabel>
+                  {form.formState.errors.verses && (
+                    <span className="text-sm text-destructive">{form.formState.errors.verses.message}</span>
+                  )}
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                   {fields.map((field, index) => (
                     <FormField
