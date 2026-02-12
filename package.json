@@ -7,13 +7,11 @@
   "scripts": {
     "dev": "pnpm --filter backend dev",
     "dev:frontend": "pnpm --filter frontend dev",
-    "build": "pnpm --filter frontend build && pnpm --filter backend build",
     "build:frontend": "pnpm --filter frontend build",
     "build:backend": "pnpm --filter backend build",
     "check": "pnpm --filter frontend check && pnpm --filter backend check",
     "format": "prettier --write .",
-    "test": "vitest run",
-    "db:push": "pnpm --filter backend db:push"
+    "test": "vitest run"
   },
   "devDependencies": {
     "prettier": "^3.6.2",
