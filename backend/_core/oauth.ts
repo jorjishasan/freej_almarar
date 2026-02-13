@@ -1,53 +1,88 @@
-import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
-import type { Express, Request, Response } from "express";
+import type { Express, NextFunction, Request, Response } from "express";
+import passport from "passport";
+import type { Profile } from "passport-google-oauth20";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import type { User } from "../drizzle/schema";
 import * as db from "../db";
-import { getSessionCookieOptions } from "./cookies";
-import { sdk } from "./sdk";
+import { ENV } from "./env";
 
-function getQueryParam(req: Request, key: string): string | undefined {
-  const value = req.query[key];
-  return typeof value === "string" ? value : undefined;
+function getRedirectUri(req: Request): string {
+  const protocol = req.headers["x-forwarded-proto"] || req.protocol || "http";
+  const host = req.headers["x-forwarded-host"] || req.get("host") || "localhost:3000";
+  return `${protocol}://${host}`;
+}
+
+function getAdminEmails(): string[] {
+  const raw = process.env.ADMIN_EMAILS;
+  if (!raw) return [];
+  return raw.split(",").map((e: string) => e.trim().toLowerCase()).filter(Boolean);
 }
 
 export function registerOAuthRoutes(app: Express) {
-  app.get("/api/oauth/callback", async (req: Request, res: Response) => {
-    const code = getQueryParam(req, "code");
-    const state = getQueryParam(req, "state");
+  const { googleClientId, googleClientSecret } = ENV;
+  if (!googleClientId || !googleClientSecret) return;
 
-    if (!code || !state) {
-      res.status(400).json({ error: "code and state are required" });
-      return;
-    }
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: googleClientId,
+        clientSecret: googleClientSecret,
+        callbackURL: "/api/oauth/callback",
+        scope: ["profile", "email"],
+        passReqToCallback: true,
+      },
+      (_req: Request, _at: string, _rt: string, profile: Profile, done: (err: null, p: Profile) => void) =>
+        done(null, profile)
+    )
+  );
 
+  passport.serializeUser((user: Express.User, done: (err: null, id?: string) => void) =>
+    done(null, (user as User).openId)
+  );
+  passport.deserializeUser(async (openId: string, done: (err: Error | null, user?: User) => void) => {
     try {
-      const tokenResponse = await sdk.exchangeCodeForToken(code, state);
-      const userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
-
-      if (!userInfo.openId) {
-        res.status(400).json({ error: "openId missing from user info" });
-        return;
-      }
-
-      await db.upsertUser({
-        openId: userInfo.openId,
-        name: userInfo.name || null,
-        email: userInfo.email ?? null,
-        loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
-        lastSignedIn: new Date(),
-      });
-
-      const sessionToken = await sdk.createSessionToken(userInfo.openId, {
-        name: userInfo.name || "",
-        expiresInMs: ONE_YEAR_MS,
-      });
-
-      const cookieOptions = getSessionCookieOptions(req);
-      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-
-      res.redirect(302, "/");
-    } catch (error) {
-      console.error("[OAuth] Callback failed", error);
-      res.status(500).json({ error: "OAuth callback failed" });
+      const user = await db.getUserByOpenId(openId);
+      done(null, user ?? undefined);
+    } catch (err) {
+      done(err instanceof Error ? err : new Error(String(err)), undefined);
     }
   });
+
+  app.get("/api/oauth/login", (req: Request, res: Response, next: NextFunction) => {
+    const callbackURL = `${getRedirectUri(req)}/api/oauth/callback`;
+    passport.authenticate("google", { scope: ["profile", "email"], callbackURL })(req, res, next);
+  });
+
+  app.get(
+    "/api/oauth/callback",
+    (req: Request, res: Response, next: NextFunction) => {
+      const callbackURL = `${getRedirectUri(req)}/api/oauth/callback`;
+      passport.authenticate(
+        "google",
+        { failureRedirect: "/", callbackURL },
+        async (err: unknown, profile: Profile | undefined) => {
+          if (err || !profile) return res.redirect(302, "/");
+          const openId = profile.id;
+          const email = profile.emails?.[0]?.value ?? null;
+          const name = profile.displayName ?? profile.name?.givenName ?? null;
+          const role = getAdminEmails().indexOf((email ?? "").toLowerCase()) >= 0 ? "admin" : "user";
+
+          await db.upsertUser({
+            openId,
+            name,
+            email,
+            loginMethod: "google",
+            role,
+            lastSignedIn: new Date(),
+          });
+
+          const user = await db.getUserByOpenId(openId);
+          if (!user) return res.redirect(302, "/");
+          req.login(user, (err) =>
+            err ? res.status(500).json({ error: "Login failed" }) : res.redirect(302, "/")
+          );
+        }
+      )(req, res, next);
+    }
+  );
 }
