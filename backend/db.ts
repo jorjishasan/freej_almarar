@@ -418,6 +418,18 @@ export async function getPoemBySlug(slug: string) {
   return result[0] || null;
 }
 
+export async function getPublishedPoemsByPoetSlug(poetSlug: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const poet = await getPoetBySlug(poetSlug);
+  if (!poet) return [];
+  
+  return await db.select().from(poems)
+    .where(and(eq(poems.poetId, poet.id), eq(poems.status, "published")))
+    .orderBy(desc(poems.publishedAt));
+}
+
 export async function getAllPoems() {
   const db = await getDb();
   if (!db) return [];

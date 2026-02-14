@@ -23,6 +23,7 @@ import ArchiveHub from "./pages/ArchiveHub";
 import Ferjan from "./pages/Ferjan";
 import Figures from "./pages/Figures";
 import Poets from "./pages/Poets";
+import PoetPoems from "./pages/PoetPoems";
 import LoadingPage from "./pages/Loading";
 import FamilyTree from "./pages/FamilyTree";
 import FamilyTreeSection from "./pages/FamilyTreeSection";
@@ -72,6 +73,7 @@ function Router() {
 
       {/* Poets (Tier 1) */}
       <Route path={"/poets"} component={Poets} />
+      <Route path={"/poets/:slug"} component={PoetPoems} />
       <Route path={"/loading"} component={LoadingPage} />
 
       {/* Legacy lineage URLs - redirect to new paths */}

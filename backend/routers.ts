@@ -291,6 +291,15 @@ export const appRouter = router({
         return await db.getPoemBySlug(input.slug);
       }),
     
+    getByPoetSlug: publicProcedure
+      .input(z.object({ poetSlug: z.string() }))
+      .query(async ({ input }) => {
+        const poet = await db.getPoetBySlug(input.poetSlug);
+        if (!poet) return { poet: null, poems: [] };
+        const poems = await db.getPublishedPoemsByPoetSlug(input.poetSlug);
+        return { poet, poems };
+      }),
+    
     getAll: adminProcedure.query(async () => {
       return await db.getAllPoems();
     }),
