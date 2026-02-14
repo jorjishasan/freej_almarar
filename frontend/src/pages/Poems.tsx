@@ -3,9 +3,11 @@ import { FileText } from "lucide-react";
 import { SectionLayout, FilterConfig, FilterValues, createDefaultFilterValues } from "@/components/SectionLayout";
 import { EmptyState } from "@/components/EmptyState";
 import { useFilters } from "@/hooks/useFilters";
-import { AddPoemDialog } from "@/components/admin/AddPoemDialog";
+import { trpc } from "@/lib/trpc";
+import { getLocalizedContent } from "@shared/language";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-// Sample poem data for demonstration
+// Sample poem data - fallback when no poems from DB
 const samplePoems = [
   {
     id: "1",
@@ -90,14 +92,24 @@ const poemFilters: FilterConfig[] = [
   },
 ];
 
+type SamplePoem = (typeof samplePoems)[number];
+type DbPoem = { id: number; slug: string; titleEn: string; titleAr: string; poetEn?: string | null; poetAr?: string | null; contentEn?: string | null; contentAr?: string | null; period?: string | null; year?: number | null; tags?: string[] | null; category?: string | null };
+type PoemItem = SamplePoem | DbPoem;
+
+function isDbPoem(poem: PoemItem): poem is DbPoem {
+  return "slug" in poem && typeof (poem as DbPoem).slug === "string";
+}
+
 export default function Poems() {
   const [, navigate] = useLocation();
-  
-  // Use the filters hook
-  const { values, setValues, filterItems, hasActiveFilters } = useFilters<typeof samplePoems[0]>();
+  const { language } = useLanguage();
+  const { data: dbPoems = [], isLoading } = trpc.poems.getPublished.useQuery();
 
-  // Filter the poems
-  const filteredPoems = filterItems(samplePoems, poemFilters);
+  // Use DB poems when available, otherwise fallback to sample
+  const poems: PoemItem[] = dbPoems.length > 0 ? dbPoems : samplePoems;
+
+  const { values, setValues, filterItems, hasActiveFilters } = useFilters<PoemItem>();
+  const filteredPoems = filterItems(poems, poemFilters);
 
   const handleContribute = () => {
     navigate("/contribute");
@@ -122,12 +134,18 @@ export default function Poems() {
       {/* Results Info */}
       {hasActiveFilters && (
         <p className="text-sm text-muted-foreground mb-6">
-          Showing {filteredPoems.length} of {samplePoems.length} poems
+          Showing {filteredPoems.length} of {poems.length} poems
         </p>
       )}
 
       {/* Content Area */}
-      {filteredPoems.length === 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-card border border-border rounded-xl p-6 animate-pulse h-48" />
+          ))}
+        </div>
+      ) : filteredPoems.length === 0 ? (
         <EmptyState
           icon={FileText}
           title={hasActiveFilters ? "No matching poems" : "No poems available yet"}
@@ -158,33 +176,42 @@ export default function Poems() {
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPoems.map((poem) => (
-            <AddPoemDialog
-              key={poem.id}
-              prefillPoem={{
-                title: poem.title,
-                tags: poem.tags,
-                verses: [poem.excerpt],
-              }}
-            >
-              <div className="group bg-card border border-border rounded-xl p-6 hover:shadow-lg hover:border-primary/30 transition-all cursor-pointer">
+          {filteredPoems.map((poem) => {
+            const title = isDbPoem(poem)
+              ? getLocalizedContent(poem, language, "title")
+              : language === "ar"
+                ? poem.title
+                : poem.titleEn;
+            const author = isDbPoem(poem)
+              ? getLocalizedContent(poem, language, "poet")
+              : language === "ar"
+                ? poem.author
+                : poem.authorEn;
+            const excerpt = isDbPoem(poem)
+              ? (language === "ar" ? poem.contentAr : poem.contentEn)?.split("\n")[0] ?? ""
+              : language === "ar"
+                ? poem.excerpt
+                : poem.excerptEn;
+            const period = isDbPoem(poem) ? (poem.period ?? poem.year ?? "—") : poem.period;
+            const tags = (isDbPoem(poem) ? poem.tags : poem.tags) ?? [];
+
+            const cardContent = (
+              <>
                 <div className="flex items-start justify-between mb-3">
                   <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                    {poem.period}
+                    {period}
                   </span>
                   <FileText className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
                 <h3 className="text-xl font-light mb-2 group-hover:text-primary transition-colors">
-                  {poem.title}
+                  {title}
                 </h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {poem.author}
-                </p>
+                <p className="text-sm text-muted-foreground mb-4">{author}</p>
                 <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
-                  {poem.excerpt}
+                  {excerpt}
                 </p>
                 <div className="flex flex-wrap gap-1.5 mt-4">
-                  {poem.tags.map((tag) => (
+                  {tags.map((tag) => (
                     <span
                       key={tag}
                       className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded"
@@ -193,9 +220,19 @@ export default function Poems() {
                     </span>
                   ))}
                 </div>
+              </>
+            );
+
+            return (
+              <div
+                key={isDbPoem(poem) ? poem.id : poem.id}
+                onClick={() => navigate("/loading")}
+                className="group bg-card border border-border rounded-xl p-6 hover:shadow-lg hover:border-primary/30 transition-all cursor-pointer"
+              >
+                {cardContent}
               </div>
-            </AddPoemDialog>
-          ))}
+            );
+          })}
         </div>
       )}
     </SectionLayout>
