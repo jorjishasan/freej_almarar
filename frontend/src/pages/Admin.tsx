@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,8 @@ import {
   Edit,
   Trash2,
   Eye,
-  EyeOff
+  EyeOff,
+  PenLine
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +29,7 @@ import { getLocalizedContent } from "@shared/language";
 import { toast } from "sonner";
 
 import { AddPoemDialog } from "@/components/admin/AddPoemDialog";
+import { AddPoetDialog } from "@/components/admin/AddPoetDialog";
 
 export default function Admin() {
   const { user, loading } = useAuth();
@@ -57,7 +60,7 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue="archives" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9">
+          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-10">
             <TabsTrigger value="archives">
               <Archive className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">{t("archives")}</span>
@@ -69,6 +72,10 @@ export default function Admin() {
             <TabsTrigger value="poems">
               <BookOpen className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">{t("poems")}</span>
+            </TabsTrigger>
+            <TabsTrigger value="poets">
+              <PenLine className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">{t("poets")}</span>
             </TabsTrigger>
             <TabsTrigger value="books">
               <Book className="h-4 w-4 mr-2" />
@@ -112,6 +119,10 @@ export default function Admin() {
           
           <TabsContent value="poems">
             <PoemsManagement language={language} t={t} />
+          </TabsContent>
+          
+          <TabsContent value="poets">
+            <PoetsManagement language={language} t={t} />
           </TabsContent>
           
           <TabsContent value="books">
@@ -288,9 +299,12 @@ function PhotosManagement({ language, t }: any) {
 
 // ============ POEMS MANAGEMENT ============
 function PoemsManagement({ language, t }: any) {
+  const [editingPoemId, setEditingPoemId] = useState<number | null>(null);
   const { data: poems, isLoading } = trpc.poems.getAll.useQuery();
   const deleteMutation = trpc.poems.delete.useMutation();
   const utils = trpc.useUtils();
+
+  const editingPoem = poems?.find((p) => p.id === editingPoemId) ?? null;
 
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this poem?")) return;
@@ -314,7 +328,15 @@ function PoemsManagement({ language, t }: any) {
               <CardTitle>{t("poems")}</CardTitle>
               <CardDescription>Manage literary heritage and poetry collection</CardDescription>
             </div>
-            <AddPoemDialog>
+            <AddPoemDialog
+              open={editingPoemId !== null ? true : undefined}
+              onOpenChange={editingPoemId !== null ? (open) => !open && setEditingPoemId(null) : undefined}
+              editingPoem={editingPoem ?? undefined}
+              onSuccess={() => {
+                setEditingPoemId(null);
+                utils.poems.getAll.invalidate();
+              }}
+            >
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Poem
@@ -325,7 +347,11 @@ function PoemsManagement({ language, t }: any) {
       <CardContent>
         <div className="space-y-4">
           {poems?.map((item) => (
-            <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+            <div
+              key={item.id}
+              className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group"
+              onClick={() => setEditingPoemId(item.id)}
+            >
               <div className="flex-1">
                 <h3 className="font-semibold">
                   {getLocalizedContent(item, language, "title")}
@@ -342,8 +368,8 @@ function PoemsManagement({ language, t }: any) {
                   {item.isFeatured && <Badge variant="default">{t("featured")}</Badge>}
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm">
+              <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                <Button variant="ghost" size="sm" onClick={() => setEditingPoemId(item.id)}>
                   <Edit className="h-4 w-4" />
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)}>
@@ -355,6 +381,119 @@ function PoemsManagement({ language, t }: any) {
           {poems?.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               No poems yet. Click "Add Poem" to create one.
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============ POETS MANAGEMENT ============
+function PoetsManagement({ language, t }: any) {
+  const [editingPoetId, setEditingPoetId] = useState<number | null>(null);
+  const { data: poets, isLoading } = trpc.poets.getAll.useQuery();
+  const deleteMutation = trpc.poets.delete.useMutation();
+  const utils = trpc.useUtils();
+
+  const editingPoet = poets?.find((p) => p.id === editingPoetId) ?? null;
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this poet?")) return;
+    
+    try {
+      await deleteMutation.mutateAsync({ id });
+      utils.poets.getAll.invalidate();
+      toast.success("Poet deleted successfully");
+    } catch (error) {
+      toast.error("Failed to delete poet");
+    }
+  };
+
+  if (isLoading) return <div>{t("loading")}</div>;
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>{t("poets")}</CardTitle>
+            <CardDescription>Manage poets and authors of poems</CardDescription>
+          </div>
+          <AddPoetDialog
+            open={editingPoetId !== null ? true : undefined}
+            onOpenChange={editingPoetId !== null ? (open) => !open && setEditingPoetId(null) : undefined}
+            editingPoem={editingPoet ?? undefined}
+            onSuccess={() => {
+              setEditingPoetId(null);
+              utils.poets.getAll.invalidate();
+            }}
+          >
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Poet
+            </Button>
+          </AddPoetDialog>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {poets?.map((item) => (
+            <div
+              key={item.id}
+              className="border rounded-lg overflow-hidden bg-card hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => setEditingPoetId(item.id)}
+            >
+              <div className="flex gap-4 p-4">
+                {item.profileImageUrl ? (
+                  <img
+                    src={item.profileImageUrl}
+                    alt={getLocalizedContent(item, language, "name")}
+                    className="w-20 h-20 rounded-full object-cover flex-shrink-0 ring-2 ring-border"
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-full bg-muted flex-shrink-0 flex items-center justify-center">
+                    <PenLine className="h-10 w-10 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold truncate">
+                    {getLocalizedContent(item, language, "name")}
+                  </h3>
+                  {item.originEn || item.originAr ? (
+                    <p className="text-sm text-muted-foreground mt-0.5 truncate">
+                      {getLocalizedContent(item, language, "origin")}
+                    </p>
+                  ) : null}
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <Badge variant={item.status === "published" ? "default" : item.status === "review" ? "secondary" : "outline"}>
+                      {t(item.status)}
+                    </Badge>
+                    {item.isFeatured && <Badge variant="default">{t("featured")}</Badge>}
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2 p-4 pt-0 border-t" onClick={(e) => e.stopPropagation()}>
+                <Button variant="ghost" size="sm" className="flex-1" onClick={() => setEditingPoetId(item.id)}>
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+          {poets?.length === 0 && (
+            <div className="col-span-full text-center py-12 text-muted-foreground">
+              <PenLine className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="font-medium">No poets yet</p>
+              <p className="text-sm mt-1">Add poets to link them with poems</p>
+              <AddPoetDialog onSuccess={() => utils.poets.getAll.invalidate()}>
+                <Button className="mt-4">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Poet
+                </Button>
+              </AddPoetDialog>
             </div>
           )}
         </div>

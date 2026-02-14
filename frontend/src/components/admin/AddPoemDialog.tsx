@@ -29,7 +29,7 @@ import { toast } from "sonner";
 // --- Form Types ---
 type PoemFormValues = {
   title?: string;
-  status: "draft" | "published";
+  status: "draft" | "review" | "published";
   verses: Array<{ text: string }>;
   poetId: string;
   tags: string[];
@@ -44,25 +44,48 @@ type PrefillPoem = {
   verses?: string[];
 };
 
+type EditingPoem = {
+  id: number;
+  titleEn: string;
+  titleAr: string;
+  contentEn: string;
+  contentAr: string;
+  slug: string;
+  poetId?: number | null;
+  poetEn?: string | null;
+  poetAr?: string | null;
+  tags?: string[] | null;
+  status: string;
+  isFeatured?: boolean;
+};
+
 export function AddPoemDialog({
   children,
   onSuccess,
   prefillPoem,
+  editingPoem,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: {
   children?: React.ReactNode;
   onSuccess?: () => void;
   prefillPoem?: PrefillPoem;
+  editingPoem?: EditingPoem | null;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? (controlledOnOpenChange ?? (() => {})) : setInternalOpen;
   const [tagInput, setTagInput] = useState("");
   const utils = trpc.useUtils();
 
-  // Queries (Mock or Real)
-  // Using people router as figures router doesn't exist yet
-  const { data: peopleData } = trpc.people.getAll.useQuery(undefined, { enabled: open });
-  
-  // Prepare poets list from people
-  const poets = peopleData?.map(p => ({ id: p.id.toString(), name: p.nameAr || p.nameEn })) || [];
+  const { data: poetsData } = trpc.poets.getAll.useQuery(undefined, { enabled: open });
+  const poets = poetsData?.map(p => ({
+    id: p.id.toString(),
+    name: p.nameAr || p.nameEn,
+  })) || [];
 
   // Build default verses, optionally from a prefilled poem
   const buildDefaultVerses = () => {
@@ -94,15 +117,31 @@ export function AddPoemDialog({
   });
 
   // --- Draft Persistence / Prefill Logic ---
-  // When used for creation (no prefillPoem), load any saved draft
+  // When editing, prefill from editingPoem
   useEffect(() => {
-    if (!open || prefillPoem) return;
+    if (!open || !editingPoem) return;
+
+    const verses = editingPoem.contentEn ? editingPoem.contentEn.split("\n").filter(Boolean) : [];
+    const verseFields = verses.length >= 4 ? verses : [...verses, ...Array(Math.max(0, 4 - verses.length)).fill("")];
+
+    form.reset({
+      title: editingPoem.titleEn ?? "",
+      status: (editingPoem.status === "published" || editingPoem.status === "review" ? editingPoem.status : "draft") as "draft" | "review" | "published",
+      verses: verseFields.map((text) => ({ text })),
+      poetId: editingPoem.poetId?.toString() ?? "",
+      tags: editingPoem.tags ?? [],
+      description: "",
+    });
+  }, [open, editingPoem, form]);
+
+  // When used for creation (no prefillPoem, no editingPoem), load any saved draft
+  useEffect(() => {
+    if (!open || prefillPoem || editingPoem) return;
     
     const savedDraft = localStorage.getItem(STORAGE_KEY);
     if (savedDraft) {
       try {
         const parsed = JSON.parse(savedDraft);
-        // Only reset if we have valid data
         if (parsed) {
           form.reset(parsed);
         }
@@ -110,11 +149,11 @@ export function AddPoemDialog({
         console.error("Failed to load draft", e);
       }
     }
-  }, [open, form, prefillPoem]);
+  }, [open, form, prefillPoem, editingPoem]);
 
-  // When used with prefilled poem data, reset the form each time dialog opens
+  // When used with prefilled poem data (submission flow), reset the form
   useEffect(() => {
-    if (!open || !prefillPoem) return;
+    if (!open || !prefillPoem || editingPoem) return;
 
     form.reset({
       title: prefillPoem.title ?? "",
@@ -124,7 +163,7 @@ export function AddPoemDialog({
       tags: prefillPoem.tags ?? [],
       description: "",
     });
-  }, [open, prefillPoem, form]);
+  }, [open, prefillPoem, editingPoem, form]);
 
   // Save draft on change (creation mode only)
   useEffect(() => {
@@ -136,7 +175,6 @@ export function AddPoemDialog({
     return () => subscription.unsubscribe();
   }, [form.watch, open, prefillPoem]);
 
-  // --- Handlers ---
   const createMutation = trpc.poems.create.useMutation({
     onSuccess: () => {
       toast.success("Poem created successfully");
@@ -148,6 +186,19 @@ export function AddPoemDialog({
     },
     onError: (err) => {
       toast.error(`Failed to create poem: ${err.message}`);
+    }
+  });
+
+  const updateMutation = trpc.poems.update.useMutation({
+    onSuccess: () => {
+      toast.success("Poem updated successfully");
+      form.reset();
+      setOpen(false);
+      utils.poems.getAll.invalidate();
+      onSuccess?.();
+    },
+    onError: (err) => {
+      toast.error(`Failed to update poem: ${err.message}`);
     }
   });
 
@@ -172,23 +223,34 @@ export function AddPoemDialog({
 
     const selectedPoet = poets.find(p => p.id === data.poetId);
 
-    createMutation.mutate({
-      titleEn: title, // Simplified: using same title for both langs for now
-      titleAr: title,
-      contentEn: content,
-      contentAr: content,
-      slug: title.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
-      status: data.status,
-      // figureId: parseInt(data.poetId), // Removed as router doesn't support it yet
-      poetEn: selectedPoet?.name || "",
-      poetAr: selectedPoet?.name || "",
-      tags: data.tags,
-      // Mapping description to one of the description fields
-      descriptionEn: data.description,
-      descriptionAr: data.description,
-      // Required fields by schema
-      // authorId: 1, // Handled by backend context
-    } as any); // Casting to any to avoid strict type checks against router input if they mismatch temporarily
+    if (editingPoem) {
+      updateMutation.mutate({
+        id: editingPoem.id,
+        titleEn: title,
+        titleAr: title,
+        contentEn: content,
+        contentAr: content,
+        slug: editingPoem.slug,
+        status: data.status,
+        poetId: data.poetId ? parseInt(data.poetId) : undefined,
+        poetEn: selectedPoet?.name || "",
+        poetAr: selectedPoet?.name || "",
+        tags: data.tags,
+      });
+    } else {
+      createMutation.mutate({
+        titleEn: title,
+        titleAr: title,
+        contentEn: content,
+        contentAr: content,
+        slug: title.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
+        status: data.status,
+        poetId: data.poetId ? parseInt(data.poetId) : undefined,
+        poetEn: selectedPoet?.name || "",
+        poetAr: selectedPoet?.name || "",
+        tags: data.tags,
+      } as any);
+    }
   };
 
   const handleAddTag = (e: React.KeyboardEvent) => {
@@ -212,20 +274,24 @@ export function AddPoemDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {children || (
-          <Button className="fixed bottom-8 right-8 shadow-lg rounded-full px-6 py-6 h-auto text-lg z-50 animate-in fade-in zoom-in duration-300">
-             <Plus className="mr-2 h-5 w-5" /> Add Poem
-          </Button>
-        )}
-      </DialogTrigger>
+      {!editingPoem && (
+        <DialogTrigger asChild>
+          {children || (
+            <Button className="fixed bottom-8 right-8 shadow-lg rounded-full px-6 py-6 h-auto text-lg z-50 animate-in fade-in zoom-in duration-300">
+              <Plus className="mr-2 h-5 w-5" /> Add Poem
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-5xl w-[95vw] bg-background border-border p-0 overflow-hidden gap-0 shadow-2xl">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-[85vh] sm:h-auto sm:max-h-[85vh]">
             
             {/* Header */}
             <div className="flex items-center justify-between px-8 py-6 border-b border-border bg-background">
-              <DialogTitle className="text-2xl font-light tracking-wide text-foreground">Add New Poem</DialogTitle>
+              <DialogTitle className="text-2xl font-light tracking-wide text-foreground">
+                {editingPoem ? "Edit Poem" : "Add New Poem"}
+              </DialogTitle>
               
               <FormField
                 control={form.control}
@@ -242,11 +308,15 @@ export function AddPoemDialog({
                            <span className="text-sm text-muted-foreground mr-1 font-light">Status:</span>
                            <div className="flex items-center space-x-2 cursor-pointer" onClick={() => field.onChange("draft")}>
                              <div className={`w-2 h-2 rounded-full ${field.value === 'draft' ? 'bg-primary' : 'bg-muted-foreground/30'}`} />
-                             <Label htmlFor="r-draft" className={`text-sm cursor-pointer font-light ${field.value === 'draft' ? 'text-primary' : 'text-muted-foreground'}`}>Draft</Label>
+                             <Label className={`text-sm cursor-pointer font-light ${field.value === 'draft' ? 'text-primary' : 'text-muted-foreground'}`}>Draft</Label>
+                           </div>
+                           <div className="flex items-center space-x-2 cursor-pointer" onClick={() => field.onChange("review")}>
+                             <div className={`w-2 h-2 rounded-full ${field.value === 'review' ? 'bg-amber-500' : 'bg-muted-foreground/30'}`} />
+                             <Label className={`text-sm cursor-pointer font-light ${field.value === 'review' ? 'text-amber-500' : 'text-muted-foreground'}`}>Review</Label>
                            </div>
                            <div className="flex items-center space-x-2 cursor-pointer" onClick={() => field.onChange("published")}>
                              <div className={`w-2 h-2 rounded-full ${field.value === 'published' ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`} />
-                             <Label htmlFor="r-published" className={`text-sm cursor-pointer font-light ${field.value === 'published' ? 'text-emerald-500' : 'text-muted-foreground'}`}>Published</Label>
+                             <Label className={`text-sm cursor-pointer font-light ${field.value === 'published' ? 'text-emerald-500' : 'text-muted-foreground'}`}>Published</Label>
                            </div>
                         </div>
                       </RadioGroup>
@@ -342,7 +412,7 @@ export function AddPoemDialog({
                               {poet.name}
                             </SelectItem>
                           ))}
-                          {poets.length === 0 && <div className="p-3 text-sm text-muted-foreground">No poets found. Add Figures first.</div>}
+                          {poets.length === 0 && <div className="p-3 text-sm text-muted-foreground">No poets found. Add poets in the Poets tab first.</div>}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -414,9 +484,10 @@ export function AddPoemDialog({
               <Button
                 type="submit"
                 size="lg"
+                disabled={createMutation.isPending || updateMutation.isPending}
                 className="min-w-[200px] h-12 font-medium text-base rounded-md shadow-lg shadow-primary/10 transition-all hover:scale-[1.02]"
               >
-                Save
+                {editingPoem ? (updateMutation.isPending ? "Updating..." : "Update") : (createMutation.isPending ? "Saving..." : "Save")}
               </Button>
             </div>
 
