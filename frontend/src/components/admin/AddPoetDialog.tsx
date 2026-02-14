@@ -28,13 +28,10 @@ const UPLOAD_FOLDER = "poets";
 const UPLOAD_URL = `/api/upload/${UPLOAD_FOLDER}`;
 
 type PoetFormValues = {
-  nameEn: string;
-  nameAr: string;
+  name: string;
   slug: string;
-  originEn?: string;
-  originAr?: string;
-  bioEn?: string;
-  bioAr?: string;
+  origin?: string;
+  bio?: string;
   profileImageUrl?: string;
   status: "draft" | "review" | "published";
   isFeatured: boolean;
@@ -86,13 +83,10 @@ export function AddPoetDialog({
 
   const form = useForm<PoetFormValues>({
     defaultValues: {
-      nameEn: "",
-      nameAr: "",
+      name: "",
       slug: "",
-      originEn: "",
-      originAr: "",
-      bioEn: "",
-      bioAr: "",
+      origin: "",
+      bio: "",
       profileImageUrl: "",
       status: "draft",
       isFeatured: false,
@@ -100,20 +94,16 @@ export function AddPoetDialog({
     mode: "onChange",
   });
 
-  const nameEn = form.watch("nameEn");
-  const nameAr = form.watch("nameAr");
+  const name = form.watch("name");
   const profileImageUrl = form.watch("profileImageUrl");
 
   useEffect(() => {
     if (!open || !editingPoem) return;
     form.reset({
-      nameEn: editingPoem.nameEn ?? "",
-      nameAr: editingPoem.nameAr ?? "",
+      name: editingPoem.nameEn ?? editingPoem.nameAr ?? "",
       slug: editingPoem.slug ?? "",
-      originEn: editingPoem.originEn ?? "",
-      originAr: editingPoem.originAr ?? "",
-      bioEn: editingPoem.bioEn ?? "",
-      bioAr: editingPoem.bioAr ?? "",
+      origin: editingPoem.originEn ?? editingPoem.originAr ?? "",
+      bio: editingPoem.bioEn ?? editingPoem.bioAr ?? "",
       profileImageUrl: editingPoem.profileImageUrl ?? "",
       status: (editingPoem.status === "published" || editingPoem.status === "review" ? editingPoem.status : "draft") as "draft" | "review" | "published",
       isFeatured: editingPoem.isFeatured ?? false,
@@ -185,20 +175,20 @@ export function AddPoetDialog({
   });
 
   const onSubmit = (data: PoetFormValues) => {
-    if (!data.nameEn?.trim() || !data.nameAr?.trim()) {
-      form.setError("nameEn", { message: "Name (EN) is required" });
-      form.setError("nameAr", { message: "Name (AR) is required" });
+    const trimmedName = data.name?.trim();
+    if (!trimmedName) {
+      form.setError("name", { message: "Name is required" });
       return;
     }
-    const slug = data.slug?.trim() || slugify(data.nameEn || data.nameAr);
+    const slug = data.slug?.trim() || slugify(trimmedName);
     const payload = {
-      nameEn: data.nameEn.trim(),
-      nameAr: data.nameAr.trim(),
+      nameEn: trimmedName,
+      nameAr: trimmedName,
       slug,
-      originEn: data.originEn?.trim() || undefined,
-      originAr: data.originAr?.trim() || undefined,
-      bioEn: data.bioEn?.trim() || undefined,
-      bioAr: data.bioAr?.trim() || undefined,
+      originEn: data.origin?.trim() || undefined,
+      originAr: data.origin?.trim() || undefined,
+      bioEn: data.bio?.trim() || undefined,
+      bioAr: data.bio?.trim() || undefined,
       profileImageUrl: data.profileImageUrl?.trim() || undefined,
       status: data.status,
       isFeatured: data.isFeatured,
@@ -211,9 +201,32 @@ export function AddPoetDialog({
   };
 
   const syncSlug = () => {
-    const s = slugify(nameEn || nameAr || "");
+    const s = slugify(name || "");
     if (s) form.setValue("slug", s);
   };
+
+  const isPending = createMutation.isPending || updateMutation.isPending;
+
+  const statusConfig = {
+    draft: {
+      label: "Draft",
+      dotClass: "bg-amber-500",
+      activeBg: "bg-amber-500/15",
+      activeText: "text-amber-700 dark:text-amber-400",
+    },
+    review: {
+      label: "Review",
+      dotClass: "bg-blue-500",
+      activeBg: "bg-blue-500/15",
+      activeText: "text-blue-700 dark:text-blue-400",
+    },
+    published: {
+      label: "Published",
+      dotClass: "bg-emerald-500",
+      activeBg: "bg-emerald-500/15",
+      activeText: "text-emerald-700 dark:text-emerald-400",
+    },
+  } as const;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -227,15 +240,13 @@ export function AddPoetDialog({
           )}
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-xl bg-background border-border p-0 overflow-hidden shadow-2xl">
+      <DialogContent className="sm:max-w-xl bg-background border-border p-0 overflow-hidden shadow-2xl rounded-2xl">
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col max-h-[90vh]"
-          >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <DialogTitle className="text-xl font-semibold">
-                {editingPoem ? "Edit Poet" : "Add New Poet"}
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-border">
+              <DialogTitle className="text-lg font-semibold tracking-tight">
+                {editingPoem ? "Edit Poet" : "Add Poet"}
               </DialogTitle>
               <FormField
                 control={form.control}
@@ -246,38 +257,33 @@ export function AddPoetDialog({
                       <RadioGroup
                         onValueChange={field.onChange}
                         value={field.value}
-                        className="flex items-center gap-4"
+                        className="flex items-center gap-1 rounded-xl bg-muted/40 p-1"
                       >
-                        <label className="flex items-center gap-2 cursor-pointer text-sm">
-                          <input
-                            type="radio"
-                            value="draft"
-                            checked={field.value === "draft"}
-                            onChange={() => field.onChange("draft")}
-                            className="rounded-full"
-                          />
-                          Draft
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer text-sm">
-                          <input
-                            type="radio"
-                            value="review"
-                            checked={field.value === "review"}
-                            onChange={() => field.onChange("review")}
-                            className="rounded-full"
-                          />
-                          Review
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer text-sm">
-                          <input
-                            type="radio"
-                            value="published"
-                            checked={field.value === "published"}
-                            onChange={() => field.onChange("published")}
-                            className="rounded-full"
-                          />
-                          Published
-                        </label>
+                        {(["draft", "review", "published"] as const).map((s) => {
+                          const config = statusConfig[s];
+                          const isActive = field.value === s;
+                          return (
+                            <label
+                              key={s}
+                              className={cn(
+                                "flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-200",
+                                isActive
+                                  ? cn(config.activeBg, config.activeText)
+                                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                              )}
+                            >
+                              <input
+                                type="radio"
+                                value={s}
+                                checked={isActive}
+                                onChange={() => field.onChange(s)}
+                                className="sr-only"
+                              />
+                              <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", config.dotClass, !isActive && "opacity-50")} />
+                              {config.label}
+                            </label>
+                          );
+                        })}
                       </RadioGroup>
                     </FormControl>
                   </FormItem>
@@ -285,268 +291,136 @@ export function AddPoetDialog({
               />
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
-              {/* Profile image */}
-              <FormField
-                control={form.control}
-                name="profileImageUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">
-                      Profile Image
-                    </FormLabel>
-                    <div className="flex items-start gap-4">
+            {/* Body - compact grid layout */}
+            <div className="space-y-4 px-6 py-5">
+              {/* Row 1: Image + Name + Origin */}
+              <div className="flex gap-5">
+                <FormField
+                  control={form.control}
+                  name="profileImageUrl"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2 shrink-0">
+                      <FormLabel className="text-sm font-medium">Photo</FormLabel>
                       <div
                         className={cn(
-                          "w-24 h-24 rounded-full border-2 border-dashed flex items-center justify-center overflow-hidden bg-muted/50 transition-colors",
+                          "flex h-20 w-20 items-center justify-center overflow-hidden rounded-xl border-2 border-dashed transition-all duration-200",
                           field.value
-                            ? "border-primary/50"
-                            : "border-muted-foreground/30 hover:border-muted-foreground/50"
+                            ? "border-primary/30 bg-muted/20"
+                            : "border-muted-foreground/20 bg-muted/30 hover:border-muted-foreground/35 hover:bg-muted/40"
                         )}
                       >
                         {field.value ? (
-                          <div className="relative w-full h-full group">
-                            <img
-                              src={field.value}
-                              alt="Profile"
-                              className="w-full h-full object-cover"
-                            />
+                          <div className="relative h-full w-full group">
+                            <img src={field.value} alt="" className="h-full w-full object-cover" />
                             <button
                               type="button"
                               onClick={removeImage}
-                              className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                              className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100"
                             >
-                              <X className="h-6 w-6 text-white" />
+                              <X className="h-4 w-4 text-white" />
                             </button>
                           </div>
                         ) : (
-                          <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
-                            {uploading ? (
-                              <Loader2 className="h-8 w-8 animate-spin" />
-                            ) : (
-                              <>
-                                <Upload className="h-6 w-6" />
-                                <span className="text-xs">Upload</span>
-                              </>
-                            )}
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={handleUpload}
-                              disabled={uploading}
-                            />
+                          <label className="flex h-full w-full cursor-pointer flex-col items-center justify-center gap-0.5 text-muted-foreground transition-colors hover:text-foreground">
+                            {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" strokeWidth={1.5} />}
+                            <span className="text-[10px] font-medium">Upload</span>
+                            <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
                           </label>
                         )}
                       </div>
-                      <div className="flex-1 text-sm text-muted-foreground">
-                        <p>Recommended: square image, at least 200×200px.</p>
-                        <p className="mt-1">
-                          Files upload directly to S3. Max 10MB.
-                        </p>
-                      </div>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Name EN / AR */}
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="nameEn"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium">
-                        Name (English) *
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Poet name in English"
-                          {...field}
-                          className="h-10"
-                        />
-                      </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="nameAr"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium">
-                        Name (Arabic) *
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="اسم الشاعر"
-                          dir="rtl"
-                          {...field}
-                          className="h-10"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid flex-1 grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel className="text-sm font-medium">Name *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Poet name" {...field} className="h-9 rounded-lg px-3" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="origin"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel className="text-sm font-medium">Origin</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. Kuwait, Najd" {...field} className="h-9 rounded-lg px-3" />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
-              {/* Slug */}
+              {/* Row 2: Slug + Auto */}
               <FormField
                 control={form.control}
                 name="slug"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="space-y-2">
                     <FormLabel className="text-sm font-medium">Slug</FormLabel>
                     <div className="flex gap-2">
                       <FormControl>
-                        <Input
-                          placeholder="url-friendly-slug"
-                          {...field}
-                          className="h-10"
-                        />
+                        <Input placeholder="url-slug" {...field} className="h-9 flex-1 rounded-lg px-3" />
                       </FormControl>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={syncSlug}
-                      >
+                      <Button type="button" variant="outline" size="sm" onClick={syncSlug} className="h-9 shrink-0 rounded-lg px-3">
                         Auto
                       </Button>
                     </div>
-                    <FormDescription>
-                      URL-friendly identifier. Auto-generated from name if empty.
-                    </FormDescription>
-                    <FormMessage />
+                    <FormDescription className="text-xs text-muted-foreground">From name if empty</FormDescription>
                   </FormItem>
                 )}
               />
 
-              {/* Origin EN / AR */}
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="originEn"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium">
-                        Origin (English)
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g. Kuwait, Najd"
-                          {...field}
-                          className="h-10"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="originAr"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium">
-                        Origin (Arabic)
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="مثال: الكويت، نجد"
-                          dir="rtl"
-                          {...field}
-                          className="h-10"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              {/* Row 3: Bio */}
+              <FormField
+                control={form.control}
+                name="bio"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel className="text-sm font-medium">Bio</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Brief biography..." {...field} rows={2} className="resize-none rounded-lg px-3 py-2 text-sm" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
 
-              {/* Bio */}
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="bioEn"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium">
-                        Bio (English)
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Brief biography..."
-                          {...field}
-                          rows={3}
-                          className="resize-none"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="bioAr"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium">
-                        Bio (Arabic)
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="نبذة مختصرة..."
-                          dir="rtl"
-                          {...field}
-                          rows={3}
-                          className="resize-none"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Featured */}
+              {/* Row 4: Featured */}
               <FormField
                 control={form.control}
                 name="isFeatured"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center gap-3 space-y-0">
+                  <FormItem className="flex flex-row items-center gap-3 space-y-0 rounded-lg border border-border/50 bg-muted/20 px-4 py-2.5">
                     <FormControl>
                       <input
                         type="checkbox"
                         checked={field.value}
                         onChange={(e) => field.onChange(e.target.checked)}
-                        className="h-4 w-4 rounded border-input"
+                        className="h-4 w-4 rounded border-input accent-primary"
                       />
                     </FormControl>
-                    <FormLabel className="font-normal cursor-pointer">
-                      Featured poet
-                    </FormLabel>
-                    <FormMessage />
+                    <FormLabel className="cursor-pointer text-sm font-medium">Featured poet</FormLabel>
                   </FormItem>
                 )}
               />
             </div>
 
-            <div className="px-6 py-4 border-t border-border flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-              >
+            {/* Footer */}
+            <div className="flex justify-end gap-3 border-t border-border bg-muted/30 px-6 py-4 rounded-b-2xl">
+              <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="rounded-lg px-4 hover:bg-muted/80">
                 Cancel
               </Button>
-              <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                {editingPoem ? (updateMutation.isPending ? "Updating..." : "Update") : (createMutation.isPending ? "Saving..." : "Create Poet")}
+              <Button type="submit" disabled={isPending} className="rounded-lg px-5 shadow-sm">
+                {editingPoem ? (isPending ? "Saving…" : "Save") : (isPending ? "Creating…" : "Create")}
               </Button>
             </div>
           </form>
