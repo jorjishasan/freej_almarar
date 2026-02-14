@@ -50,7 +50,7 @@ export function registerOAuthRoutes(app: Express) {
 
   app.get("/api/oauth/login", (req: Request, res: Response, next: NextFunction) => {
     const callbackURL = `${getRedirectUri(req)}/api/oauth/callback`;
-    passport.authenticate("google", { scope: ["profile", "email"], callbackURL })(req, res, next);
+    passport.authenticate("google", { scope: ["profile", "email"], callbackURL } as passport.AuthenticateOptions)(req, res, next);
   });
 
   app.get(
@@ -59,7 +59,7 @@ export function registerOAuthRoutes(app: Express) {
       const callbackURL = `${getRedirectUri(req)}/api/oauth/callback`;
       passport.authenticate(
         "google",
-        { failureRedirect: "/", callbackURL },
+        { failureRedirect: "/", callbackURL } as passport.AuthenticateOptions,
         async (err: unknown, profile: Profile | undefined) => {
           if (err || !profile) return res.redirect(302, "/");
           const openId = profile.id;
