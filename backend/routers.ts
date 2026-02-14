@@ -302,6 +302,7 @@ export const appRouter = router({
         contentEn: z.string().min(1),
         contentAr: z.string().min(1),
         slug: z.string().min(1),
+        poetId: z.number().optional(),
         poetEn: z.string().optional(),
         poetAr: z.string().optional(),
         year: z.number().optional(),
@@ -328,6 +329,7 @@ export const appRouter = router({
         contentEn: z.string().optional(),
         contentAr: z.string().optional(),
         slug: z.string().optional(),
+        poetId: z.number().optional(),
         poetEn: z.string().optional(),
         poetAr: z.string().optional(),
         year: z.number().optional(),
@@ -356,6 +358,86 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         await db.deletePoem(input.id);
+        return { success: true };
+      }),
+  }),
+
+  // ============ POETS ============
+  poets: router({
+    getPublished: publicProcedure.query(async () => {
+      return await db.getPublishedPoets();
+    }),
+    
+    getFeatured: publicProcedure
+      .input(z.object({ limit: z.number().default(6) }))
+      .query(async ({ input }) => {
+        return await db.getFeaturedPoets(input.limit);
+      }),
+    
+    getBySlug: publicProcedure
+      .input(z.object({ slug: z.string() }))
+      .query(async ({ input }) => {
+        return await db.getPoetBySlug(input.slug);
+      }),
+    
+    getAll: adminProcedure.query(async () => {
+      return await db.getAllPoets();
+    }),
+    
+    create: adminProcedure
+      .input(z.object({
+        nameEn: z.string().min(1),
+        nameAr: z.string().min(1),
+        slug: z.string().min(1),
+        originEn: z.string().optional(),
+        originAr: z.string().optional(),
+        bioEn: z.string().optional(),
+        bioAr: z.string().optional(),
+        profileImageUrl: z.string().optional(),
+        status: contentStatusSchema.default("draft"),
+        isFeatured: z.boolean().default(false),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.createPoet({
+          ...input,
+          authorId: ctx.user.id,
+          publishedAt: input.status === "published" ? new Date() : undefined,
+        });
+      }),
+    
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        nameEn: z.string().optional(),
+        nameAr: z.string().optional(),
+        slug: z.string().optional(),
+        originEn: z.string().optional(),
+        originAr: z.string().optional(),
+        bioEn: z.string().optional(),
+        bioAr: z.string().optional(),
+        profileImageUrl: z.string().optional(),
+        status: contentStatusSchema.optional(),
+        isFeatured: z.boolean().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, status, ...updates } = input;
+        const updateData: Record<string, unknown> = updates;
+        
+        if (status === "published") {
+          updateData.status = status;
+          updateData.publishedAt = new Date();
+        } else if (status) {
+          updateData.status = status;
+        }
+        
+        await db.updatePoet(id, updateData);
+        return { success: true };
+      }),
+    
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.deletePoet(input.id);
         return { success: true };
       }),
   }),

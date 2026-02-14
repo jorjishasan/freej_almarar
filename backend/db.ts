@@ -6,6 +6,7 @@ import {
   navigationItems,
   archiveItems,
   photos,
+  poets,
   poems,
   books,
   heritageEntries,
@@ -22,6 +23,8 @@ import {
   InsertArchiveItem,
   Photo,
   InsertPhoto,
+  Poet,
+  InsertPoet,
   Poem,
   InsertPoem,
   Book,
@@ -296,6 +299,69 @@ export async function deletePhoto(id: number) {
   if (!db) throw new Error("Database not available");
   
   await db.delete(photos).where(eq(photos.id, id));
+}
+
+// ============ POETS ============
+
+export async function getPublishedPoets() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(poets)
+    .where(eq(poets.status, "published"))
+    .orderBy(poets.nameEn);
+}
+
+export async function getFeaturedPoets(limit: number = 6) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(poets)
+    .where(and(eq(poets.status, "published"), eq(poets.isFeatured, true)))
+    .orderBy(poets.nameEn)
+    .limit(limit);
+}
+
+export async function getPoetBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(poets).where(eq(poets.slug, slug)).limit(1);
+  return result[0] || null;
+}
+
+export async function getAllPoets() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(poets).orderBy(desc(poets.createdAt));
+}
+
+export async function createPoet(item: InsertPoet): Promise<Poet> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(poets).values(item);
+  const insertId = Number(result[0].insertId);
+  
+  const created = await db.select().from(poets).where(eq(poets.id, insertId)).limit(1);
+  if (!created[0]) throw new Error("Failed to retrieve created poet");
+  
+  return created[0];
+}
+
+export async function updatePoet(id: number, updates: Partial<InsertPoet>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(poets).set(updates).where(eq(poets.id, id));
+}
+
+export async function deletePoet(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(poets).where(eq(poets.id, id));
 }
 
 // ============ POEMS ============

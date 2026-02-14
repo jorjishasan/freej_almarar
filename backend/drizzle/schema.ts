@@ -133,6 +133,31 @@ export type Photo = typeof photos.$inferSelect;
 export type InsertPhoto = typeof photos.$inferInsert;
 
 /**
+ * Poets - Tier 1
+ * Poets/authors of poems. Linked to poems via poetId.
+ */
+export const poets = mysqlTable("poets", {
+  id: int("id").autoincrement().primaryKey(),
+  nameEn: varchar("name_en", { length: 200 }).notNull(),
+  nameAr: varchar("name_ar", { length: 200 }).notNull(),
+  slug: varchar("slug", { length: 200 }).notNull().unique(),
+  originEn: varchar("origin_en", { length: 200 }),
+  originAr: varchar("origin_ar", { length: 200 }),
+  bioEn: text("bio_en"),
+  bioAr: text("bio_ar"),
+  profileImageUrl: varchar("profile_image_url", { length: 500 }),
+  status: mysqlEnum("status", ["draft", "review", "published"]).default("draft").notNull(),
+  isFeatured: boolean("is_featured").default(false).notNull(),
+  authorId: int("author_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+  publishedAt: timestamp("published_at"),
+});
+
+export type Poet = typeof poets.$inferSelect;
+export type InsertPoet = typeof poets.$inferInsert;
+
+/**
  * Poems - Tier 1 standalone section (NOT in Archive)
  * Literary heritage and poetic works
  */
@@ -143,6 +168,7 @@ export const poems = mysqlTable("poems", {
   contentEn: text("content_en").notNull(),
   contentAr: text("content_ar").notNull(),
   slug: varchar("slug", { length: 200 }).notNull().unique(),
+  poetId: int("poet_id"), // Links to poets table
   poetEn: varchar("poet_en", { length: 200 }),
   poetAr: varchar("poet_ar", { length: 200 }),
   

@@ -7,6 +7,7 @@ import passport from "passport";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { ENV } from "./env";
 import { registerOAuthRoutes } from "./oauth";
+import { registerUploadRoutes } from "./uploadRoutes";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -47,6 +48,7 @@ async function startServer() {
   app.use(passport.initialize());
   app.use(passport.session());
   registerOAuthRoutes(app);
+  registerUploadRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",
