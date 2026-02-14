@@ -368,6 +368,10 @@ export const appRouter = router({
       return await db.getPublishedPoets();
     }),
     
+    getPublishedWithPoemCount: publicProcedure.query(async () => {
+      return await db.getPublishedPoetsWithPoemCount();
+    }),
+    
     getFeatured: publicProcedure
       .input(z.object({ limit: z.number().default(6) }))
       .query(async ({ input }) => {

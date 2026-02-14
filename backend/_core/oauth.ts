@@ -49,6 +49,10 @@ export function registerOAuthRoutes(app: Express) {
   });
 
   app.get("/api/oauth/login", (req: Request, res: Response, next: NextFunction) => {
+    const returnTo = typeof req.query.returnTo === "string" ? req.query.returnTo : undefined;
+    if (returnTo && returnTo.startsWith("/")) {
+      (req.session as unknown as Record<string, unknown>).returnTo = returnTo;
+    }
     const callbackURL = `${getRedirectUri(req)}/api/oauth/callback`;
     passport.authenticate("google", { scope: ["profile", "email"], callbackURL } as passport.AuthenticateOptions)(req, res, next);
   });
@@ -78,8 +82,12 @@ export function registerOAuthRoutes(app: Express) {
 
           const user = await db.getUserByOpenId(openId);
           if (!user) return res.redirect(302, "/");
+          const returnTo = (req.session as unknown as Record<string, unknown>)?.returnTo as string | undefined;
+          if (returnTo && returnTo.startsWith("/")) {
+            delete (req.session as unknown as Record<string, unknown>).returnTo;
+          }
           req.login(user, (err) =>
-            err ? res.status(500).json({ error: "Login failed" }) : res.redirect(302, "/")
+            err ? res.status(500).json({ error: "Login failed" }) : res.redirect(302, returnTo && returnTo.startsWith("/") ? returnTo : "/")
           );
         }
       )(req, res, next);

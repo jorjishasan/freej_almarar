@@ -36,8 +36,6 @@ type PoemFormValues = {
   description?: string;
 };
 
-const STORAGE_KEY = "poem-draft-v1";
-
 type PrefillPoem = {
   title?: string;
   tags?: string[];
@@ -134,21 +132,17 @@ export function AddPoemDialog({
     });
   }, [open, editingPoem, form]);
 
-  // When used for creation (no prefillPoem, no editingPoem), load any saved draft
+  // When opening for creation (no prefillPoem, no editingPoem), reset to fresh form
   useEffect(() => {
     if (!open || prefillPoem || editingPoem) return;
-    
-    const savedDraft = localStorage.getItem(STORAGE_KEY);
-    if (savedDraft) {
-      try {
-        const parsed = JSON.parse(savedDraft);
-        if (parsed) {
-          form.reset(parsed);
-        }
-      } catch (e) {
-        console.error("Failed to load draft", e);
-      }
-    }
+    form.reset({
+      title: "",
+      status: "draft",
+      verses: [{ text: "" }, { text: "" }, { text: "" }, { text: "" }],
+      poetId: "",
+      tags: [],
+      description: "",
+    });
   }, [open, form, prefillPoem, editingPoem]);
 
   // When used with prefilled poem data (submission flow), reset the form
@@ -165,20 +159,9 @@ export function AddPoemDialog({
     });
   }, [open, prefillPoem, editingPoem, form]);
 
-  // Save draft on change (creation mode only)
-  useEffect(() => {
-    if (!open || prefillPoem) return;
-
-    const subscription = form.watch((value) => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
-    });
-    return () => subscription.unsubscribe();
-  }, [form.watch, open, prefillPoem]);
-
   const createMutation = trpc.poems.create.useMutation({
     onSuccess: () => {
       toast.success("Poem created successfully");
-      localStorage.removeItem(STORAGE_KEY);
       form.reset();
       setOpen(false);
       utils.poems.getAll.invalidate();

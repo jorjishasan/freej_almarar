@@ -1,59 +1,37 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useLocation } from "wouter";
 import { SectionLayout } from "@/components/SectionLayout";
+import { trpc } from "@/lib/trpc";
 
 const samplePoets = [
-  {
-    id: "1",
-    nameEn: "Ahmad AlKendi AlMarar",
-    nameAr: "أحمد الكندي المرر",
-    locationEn: "Abu Dhabi",
-    locationAr: "أبوظبي",
-    poemsCount: 12,
-    imageUrl: "/poets/poet1.png",
-  },
-  {
-    id: "2",
-    nameEn: "Mana Saeed Al Otaiba",
-    nameAr: "مانع سعيد العتيبة",
-    locationEn: "Abu Dhabi",
-    locationAr: "أبوظبي",
-    poemsCount: 24,
-    imageUrl: "/poets/poet2.png",
-  },
-  {
-    id: "3",
-    nameEn: "Ahmad bin BaleeD AlMarar",
-    nameAr: "أحمد بن بليد المرر",
-    locationEn: "Abu Dhabi",
-    locationAr: "أبوظبي",
-    poemsCount: 9,
-    imageUrl: "/poets/poet3.png",
-  },
-  {
-    id: "4",
-    nameEn: "Ali Bin Meswhat AlMarri",
-    nameAr: "علي بن مسوات المري",
-    locationEn: "Abu Dhabi",
-    locationAr: "أبوظبي",
-    poemsCount: 7,
-    imageUrl: "/poets/poet4.png",
-  },
-  {
-    id: "5",
-    nameEn: "Hamad AlMarar",
-    nameAr: "حمد المرر",
-    locationEn: "Abu Dhabi",
-    locationAr: "أبوظبي",
-    poemsCount: 5,
-    imageUrl: "/poets/poet2.png",
-  },
+  { id: "1", nameEn: "Ahmad AlKendi AlMarar", nameAr: "أحمد الكندي المرر", locationEn: "Abu Dhabi", locationAr: "أبوظبي", poemsCount: 12, imageUrl: "/poets/poet1.png", slug: "" },
+  { id: "2", nameEn: "Mana Saeed Al Otaiba", nameAr: "مانع سعيد العتيبة", locationEn: "Abu Dhabi", locationAr: "أبوظبي", poemsCount: 24, imageUrl: "/poets/poet2.png", slug: "" },
+  { id: "3", nameEn: "Ahmad bin BaleeD AlMarar", nameAr: "أحمد بن بليد المرر", locationEn: "Abu Dhabi", locationAr: "أبوظبي", poemsCount: 9, imageUrl: "/poets/poet3.png", slug: "" },
+  { id: "4", nameEn: "Ali Bin Meswhat AlMarri", nameAr: "علي بن مسوات المري", locationEn: "Abu Dhabi", locationAr: "أبوظبي", poemsCount: 7, imageUrl: "/poets/poet4.png", slug: "" },
+  { id: "5", nameEn: "Hamad AlMarar", nameAr: "حمد المرر", locationEn: "Abu Dhabi", locationAr: "أبوظبي", poemsCount: 5, imageUrl: "/poets/poet2.png", slug: "" },
 ];
 
 export default function Poets() {
   const { language } = useLanguage();
   const isArabic = language === "ar";
   const [, setLocation] = useLocation();
+  const { data: dbPoets, isLoading } = trpc.poets.getPublishedWithPoemCount.useQuery();
+
+  const poets =
+    dbPoets && dbPoets.length > 0
+      ? dbPoets.map((p) => ({
+          id: String(p.id),
+          nameEn: p.nameEn,
+          nameAr: p.nameAr,
+          locationEn: p.originEn ?? "",
+          locationAr: p.originAr ?? "",
+          poemsCount: p.poemCount ?? 0,
+          imageUrl: p.profileImageUrl ?? undefined,
+          slug: p.slug,
+        }))
+      : samplePoets;
+
+  const displayPoets = isLoading ? samplePoets : poets;
 
   return (
     <SectionLayout
@@ -65,11 +43,11 @@ export default function Poets() {
       showSearch={false}
     >
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-        {samplePoets.map((poet) => (
+        {displayPoets.map((poet) => (
           <div
             key={poet.id}
             className="group relative bg-card text-card-foreground shadow-sm border border-border overflow-hidden rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl cursor-pointer"
-            onClick={() => setLocation("/loading")}
+            onClick={() => setLocation(poet.slug ? `/poets/${poet.slug}` : "/loading")}
           >
             {/* Top avatar / portrait area - full width, slightly shorter height */}
             <div className="w-full aspect-[4/5] max-h-56 bg-muted flex items-center justify-center overflow-hidden">

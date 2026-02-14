@@ -312,6 +312,31 @@ export async function getPublishedPoets() {
     .orderBy(poets.nameEn);
 }
 
+export async function getPublishedPoetsWithPoemCount() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const rows = await db
+    .select({
+      id: poets.id,
+      nameEn: poets.nameEn,
+      nameAr: poets.nameAr,
+      slug: poets.slug,
+      originEn: poets.originEn,
+      originAr: poets.originAr,
+      profileImageUrl: poets.profileImageUrl,
+      poemCount: sql<number>`(SELECT COUNT(*) FROM poems WHERE poems.poet_id = poets.id)`.as("poem_count"),
+    })
+    .from(poets)
+    .where(eq(poets.status, "published"))
+    .orderBy(poets.nameEn);
+  
+  return rows.map((r) => ({
+    ...r,
+    poemCount: Number(r.poemCount ?? 0),
+  }));
+}
+
 export async function getFeaturedPoets(limit: number = 6) {
   const db = await getDb();
   if (!db) return [];
