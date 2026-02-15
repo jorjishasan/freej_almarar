@@ -61,34 +61,52 @@ export function registerOAuthRoutes(app: Express) {
     "/api/oauth/callback",
     (req: Request, res: Response, next: NextFunction) => {
       const callbackURL = `${getRedirectUri(req)}/api/oauth/callback`;
+      const baseUrl = ENV.frontendUrl || getRedirectUri(req);
+      const home = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
       passport.authenticate(
         "google",
-        { failureRedirect: "/", callbackURL } as passport.AuthenticateOptions,
+        { failureRedirect: home + "/", callbackURL } as passport.AuthenticateOptions,
         async (err: unknown, profile: Profile | undefined) => {
-          if (err || !profile) return res.redirect(302, "/");
-          const openId = profile.id;
-          const email = profile.emails?.[0]?.value ?? null;
-          const name = profile.displayName ?? profile.name?.givenName ?? null;
-          const role = getAdminEmails().indexOf((email ?? "").toLowerCase()) >= 0 ? "admin" : "user";
-
-          await db.upsertUser({
-            openId,
-            name,
-            email,
-            loginMethod: "google",
-            role,
-            lastSignedIn: new Date(),
-          });
-
-          const user = await db.getUserByOpenId(openId);
-          if (!user) return res.redirect(302, "/");
-          const returnTo = (req.session as unknown as Record<string, unknown>)?.returnTo as string | undefined;
-          if (returnTo && returnTo.startsWith("/")) {
-            delete (req.session as unknown as Record<string, unknown>).returnTo;
+          if (err || !profile) {
+            console.error("[OAuth] Callback error:", err);
+            return res.redirect(302, home + "/");
           }
-          req.login(user, (err) =>
-            err ? res.status(500).json({ error: "Login failed" }) : res.redirect(302, returnTo && returnTo.startsWith("/") ? returnTo : "/")
-          );
+
+          try {
+            const openId = profile.id;
+            const email = profile.emails?.[0]?.value ?? null;
+            const name = profile.displayName ?? profile.name?.givenName ?? null;
+            const role = getAdminEmails().indexOf((email ?? "").toLowerCase()) >= 0 ? "admin" : "user";
+
+            await db.upsertUser({
+              openId,
+              name,
+              email,
+              loginMethod: "google",
+              role,
+              lastSignedIn: new Date(),
+            });
+
+            const user = await db.getUserByOpenId(openId);
+            if (!user) return res.redirect(302, home + "/");
+
+            const returnTo = (req.session as unknown as Record<string, unknown>)?.returnTo as string | undefined;
+            if (returnTo && returnTo.startsWith("/")) {
+              delete (req.session as unknown as Record<string, unknown>).returnTo;
+            }
+            const redirectPath = returnTo && returnTo.startsWith("/") ? returnTo : "/";
+
+            req.login(user, (loginErr) => {
+              if (loginErr) {
+                console.error("[OAuth] req.login failed:", loginErr);
+                return res.redirect(302, home + "/?login_error=1");
+              }
+              res.redirect(302, home + redirectPath);
+            });
+          } catch (dbErr) {
+            console.error("[OAuth] DB error during callback:", dbErr);
+            res.redirect(302, home + "/?login_error=1");
+          }
         }
       )(req, res, next);
     }

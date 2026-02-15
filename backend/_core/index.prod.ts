@@ -45,7 +45,12 @@ async function startServer() {
       secret: ENV.sessionSecret,
       resave: false,
       saveUninitialized: false,
-      cookie: { httpOnly: true, secure: ENV.isProduction, sameSite: "lax", maxAge: 365 * 24 * 60 * 60 * 1000 },
+      cookie: {
+        httpOnly: true,
+        secure: ENV.isProduction,
+        sameSite: ENV.frontendUrl ? "none" : "lax",
+        maxAge: 365 * 24 * 60 * 60 * 1000,
+      },
     })
   );
   app.use(passport.initialize());
