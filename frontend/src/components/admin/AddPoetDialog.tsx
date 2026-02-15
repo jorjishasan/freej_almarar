@@ -23,9 +23,9 @@ import { PenLine, Upload, Loader2, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { getUploadUrl } from "@/const";
 
 const UPLOAD_FOLDER = "poets";
-const UPLOAD_URL = `/api/upload/${UPLOAD_FOLDER}`;
 
 type PoetFormValues = {
   name: string;
@@ -122,7 +122,7 @@ export function AddPoetDialog({
       try {
         const formData = new FormData();
         formData.append("file", file);
-        const res = await fetch(UPLOAD_URL, {
+        const res = await fetch(getUploadUrl(UPLOAD_FOLDER), {
           method: "POST",
           body: formData,
           credentials: "include",
