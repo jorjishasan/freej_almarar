@@ -352,24 +352,33 @@ export function AddPoemDialog({
                   )}
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {fields.map((field, index) => (
-                    <FormField
-                      key={field.id}
-                      control={form.control}
-                      name={`verses.${index}.text`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              placeholder={index < 4 ? `Verse ${index + 1}` : `Verse ${index + 1}`}
-                              className="h-9 rounded-lg px-3 bg-muted/30"
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  ))}
+                  {(() => {
+                    const ordered: number[] = [];
+                    for (let row = 0; row < Math.ceil(fields.length / 2); row++) {
+                      const right = row * 2;
+                      const left = row * 2 + 1;
+                      if (left < fields.length) ordered.push(left);
+                      ordered.push(right);
+                    }
+                    return ordered.map((idx) => (
+                      <FormField
+                        key={fields[idx].id}
+                        control={form.control}
+                        name={`verses.${idx}.text`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                placeholder={`Verse ${idx + 1}`}
+                                className="h-9 rounded-lg px-3 bg-muted/30"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    ));
+                  })()}
                 </div>
                 <Button type="button" variant="ghost" size="sm" onClick={() => append({ text: "" })} className="h-8 text-muted-foreground hover:text-foreground -ml-1">
                   <Plus className="h-3.5 w-3.5 mr-1.5" /> Add verse
