@@ -6,6 +6,10 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import viteConfig from "../../frontend/vite.config";
 
+/**
+ * Setup Vite dev server for HMR. Only used in development.
+ * Imports @tailwindcss/vite via frontend vite.config - must not be loaded in production.
+ */
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
@@ -44,26 +48,5 @@ export async function setupVite(app: Express, server: Server) {
       vite.ssrFixStacktrace(e as Error);
       next(e);
     }
-  });
-}
-
-export function serveStatic(app: Express) {
-      // In production, frontend build output is in frontend/dist
-      // In development, it might be in dist/public (legacy) or frontend/dist
-      const distPath = process.env.NODE_ENV === "development"
-        ? path.resolve(import.meta.dirname, "../..", "frontend", "dist")
-        : path.resolve(import.meta.dirname, "../..", "frontend", "dist");
-  
-  if (!fs.existsSync(distPath)) {
-    console.error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`
-    );
-  }
-
-  app.use(express.static(distPath));
-
-  // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
   });
 }

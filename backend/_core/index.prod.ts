@@ -1,3 +1,7 @@
+/**
+ * Production entry point. No Vite/dev dependencies - uses static file serving only.
+ * Use this for deployment to avoid bundling @tailwindcss/vite.
+ */
 import "dotenv/config";
 import express from "express";
 import session from "express-session";
@@ -34,7 +38,6 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
-  // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   app.use(
@@ -49,7 +52,6 @@ async function startServer() {
   app.use(passport.session());
   registerOAuthRoutes(app);
   registerUploadRoutes(app);
-  // tRPC API
   app.use(
     "/api/trpc",
     createExpressMiddleware({
@@ -57,13 +59,7 @@ async function startServer() {
       createContext,
     })
   );
-  // development mode uses Vite, production mode uses static files
-  if (process.env.NODE_ENV === "development") {
-    const { setupVite } = await import("./vite");
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
+  serveStatic(app);
 
   const preferredPort = parseInt(process.env.PORT || "3000");
   const port = await findAvailablePort(preferredPort);
