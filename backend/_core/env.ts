@@ -2,6 +2,9 @@ export const ENV = {
   sessionSecret: process.env.JWT_SECRET ?? process.env.SESSION_SECRET ?? "",
   databaseUrl: process.env.DATABASE_URL ?? "",
   frontendUrl: process.env.FRONTEND_URL ?? "",
+  backendUrl: process.env.RAILWAY_PUBLIC_DOMAIN
+    ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+    : process.env.BACKEND_URL ?? "",
   isProduction: process.env.NODE_ENV === "production",
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",

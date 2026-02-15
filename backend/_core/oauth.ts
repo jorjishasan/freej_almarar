@@ -7,6 +7,7 @@ import * as db from "../db";
 import { ENV } from "./env";
 
 function getRedirectUri(req: Request): string {
+  if (ENV.backendUrl) return ENV.backendUrl.replace(/\/$/, "");
   const protocol = req.headers["x-forwarded-proto"] || req.protocol || "http";
   const host = req.headers["x-forwarded-host"] || req.get("host") || "localhost:3000";
   return `${protocol}://${host}`;
