@@ -10,10 +10,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "src"),
-      "@shared": path.resolve(import.meta.dirname, "..", "shared"),
+      "@shared": path.resolve(import.meta.dirname, "src/shared"),
     },
   },
-  envDir: path.resolve(import.meta.dirname, ".."),
+  envDir: import.meta.dirname,
   server: {
     host: true,
     proxy: { "/api": { target: "http://localhost:3000", changeOrigin: true } },
