@@ -55,6 +55,7 @@ export function registerOAuthRoutes(app: Express) {
       (req.session as unknown as Record<string, unknown>).returnTo = returnTo;
     }
     const callbackURL = `${getRedirectUri(req)}/api/oauth/callback`;
+    console.log("[OAuth] Redirect URI sent to Google:", callbackURL);
     passport.authenticate("google", { scope: ["profile", "email"], callbackURL } as passport.AuthenticateOptions)(req, res, next);
   });
 
