@@ -1,0 +1,14 @@
+# Railway/Nixpacks config: backend-only deployment (frontend on Netlify)
+# Root Directory: leave empty
+
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["corepack enable", "pnpm install --filter freej_almarar-backend"]
+
+[phases.build]
+cmds = ["cd backend && pnpm build"]
+
+[start]
+cmd = "node backend/dist/index.js"
