@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import session from "express-session";
+import { createSessionStore } from "./sessionStore";
 import { createServer } from "http";
 import net from "net";
 import passport from "passport";
@@ -37,9 +38,11 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  const sessionStore = createSessionStore();
   app.use(
     session({
       secret: ENV.sessionSecret,
+      store: sessionStore,
       resave: false,
       saveUninitialized: false,
       cookie: { httpOnly: true, secure: ENV.isProduction, sameSite: "lax", maxAge: 365 * 24 * 60 * 60 * 1000 },
