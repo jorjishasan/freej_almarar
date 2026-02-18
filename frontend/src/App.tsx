@@ -24,6 +24,7 @@ import Ferjan from "./pages/Ferjan";
 import Figures from "./pages/Figures";
 import Poets from "./pages/Poets";
 import PoetPoems from "./pages/PoetPoems";
+import PoemDetail from "./pages/PoemDetail";
 import LoadingPage from "./pages/Loading";
 import FamilyTree from "./pages/FamilyTree";
 import FamilyTreeSection from "./pages/FamilyTreeSection";
@@ -85,7 +86,7 @@ function Router() {
       </Route>
       
       <Route path={"/poems"} component={Poems} />
-      <Route path={"/poems/:slug"} component={ArchiveDetail} /> {/* TODO: Create PoemDetail */}
+      <Route path={"/poems/:slug"} component={PoemDetail} />
       
       {/* Tier 2 Sections */}
       <Route path={"/reposts"} component={Reposts} />

@@ -1,4 +1,4 @@
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { FileText } from "lucide-react";
 import { SectionLayout, FilterConfig, FilterValues, createDefaultFilterValues } from "@/components/SectionLayout";
 import { EmptyState } from "@/components/EmptyState";
@@ -223,14 +223,15 @@ export default function Poems() {
               </>
             );
 
+            const poemSlug = isDbPoem(poem) ? poem.slug : (poem as { slug?: string }).slug ?? String(poem.id);
             return (
-              <div
+              <Link
                 key={isDbPoem(poem) ? poem.id : poem.id}
-                onClick={() => navigate("/loading")}
-                className="group bg-card border border-border rounded-xl p-6 hover:shadow-lg hover:border-primary/30 transition-all cursor-pointer"
+                href={`/poems/${poemSlug}`}
+                className="group bg-card border border-border rounded-xl p-6 hover:shadow-lg hover:border-primary/30 transition-all block"
               >
                 {cardContent}
-              </div>
+              </Link>
             );
           })}
         </div>

@@ -290,6 +290,12 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await db.getPoemBySlug(input.slug);
       }),
+
+    getDetailBySlug: publicProcedure
+      .input(z.object({ slug: z.string() }))
+      .query(async ({ input }) => {
+        return await db.getPoemDetailBySlug(input.slug);
+      }),
     
     getByPoetSlug: publicProcedure
       .input(z.object({ poetSlug: z.string() }))

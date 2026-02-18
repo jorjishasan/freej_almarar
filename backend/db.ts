@@ -1,4 +1,4 @@
-import { eq, desc, and, or, sql } from "drizzle-orm";
+import { eq, ne, desc, and, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, 
@@ -55,6 +55,8 @@ export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
       _db = drizzle(process.env.DATABASE_URL);
+      await _db.execute(sql`SELECT 1`);
+      console.log("[Database] Successfully connected to database");
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -416,6 +418,31 @@ export async function getPoemBySlug(slug: string) {
   
   const result = await db.select().from(poems).where(eq(poems.slug, slug)).limit(1);
   return result[0] || null;
+}
+
+export async function getPoemDetailBySlug(slug: string) {
+  const poem = await getPoemBySlug(slug);
+  if (!poem) return null;
+
+  const db = await getDb();
+  if (!db) return { poem, poet: null, otherPoems: [] };
+
+  let poet: Poet | null = null;
+  let otherPoems: Poem[] = [];
+
+  if (poem.poetId) {
+    const [poetRow] = await db.select().from(poets).where(eq(poets.id, poem.poetId)).limit(1);
+    poet = poetRow || null;
+
+    if (poet) {
+      otherPoems = await db.select().from(poems)
+        .where(and(eq(poems.poetId, poet!.id), eq(poems.status, "published"), ne(poems.id, poem.id)))
+        .orderBy(desc(poems.publishedAt))
+        .limit(3);
+    }
+  }
+
+  return { poem, poet, otherPoems };
 }
 
 export async function getPublishedPoemsByPoetSlug(poetSlug: string) {
