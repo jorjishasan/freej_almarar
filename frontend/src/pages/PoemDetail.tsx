@@ -1,4 +1,4 @@
-import { Link, useRoute } from "wouter";
+import { Link, useRoute, useLocation } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -13,9 +13,21 @@ import { ChevronLeft, Heart, Share2, MoreHorizontal } from "lucide-react";
 
 export default function PoemDetail() {
   const [, params] = useRoute("/poems/:slug");
+  const [, setLocation] = useLocation();
   const slug = params?.slug ?? "";
   const { language, t } = useLanguage();
   const isArabic = language === "ar";
+
+  const poetSlugFromUrl = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "").get("poet");
+  const backHref = poetSlugFromUrl ? `/poets/${poetSlugFromUrl}` : "/poems";
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      setLocation(backHref);
+    }
+  };
 
   const { data, isLoading } = trpc.poems.getDetailBySlug.useQuery(
     { slug },
@@ -62,12 +74,10 @@ export default function PoemDetail() {
         <main className="pt-16">
           <div className="max-w-3xl mx-auto px-6 py-12 text-center">
             <h1 className="text-2xl font-semibold mb-4">{t("noResults")}</h1>
-            <Link href="/poems">
-              <Button variant="outline">
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                {isArabic ? "العودة للقصائد" : "Back to Poems"}
-              </Button>
-            </Link>
+            <Button variant="outline" onClick={handleBack}>
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              {poetSlugFromUrl ? (isArabic ? "العودة للشاعر" : "Back to poet") : (isArabic ? "العودة للقصائد" : "Back to Poems")}
+            </Button>
           </div>
         </main>
         <Footer />
@@ -83,8 +93,7 @@ export default function PoemDetail() {
   const rightVerses = verses.filter((_, i) => i % 2 === 0);
   const leftVerses = verses.filter((_, i) => i % 2 === 1);
 
-  const backHref = poet?.slug ? `/poets/${poet.slug}` : "/poems";
-  const backLabel = poet
+  const backLabel = poetSlugFromUrl
     ? (isArabic ? "العودة للشاعر" : "Back to poet")
     : (isArabic ? "العودة للقصائد" : "Back to Poems");
 
@@ -95,10 +104,14 @@ export default function PoemDetail() {
         <div className="max-w-3xl mx-auto px-6 py-8">
           {/* Top nav: Back to poet | Icons */}
           <div className="flex items-center justify-between mb-8">
-            <Link href={backHref} className="flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
               <ChevronLeft className={`h-4 w-4 ${isArabic ? "ml-1 order-2" : "mr-1"}`} />
               <span>{backLabel}</span>
-            </Link>
+            </button>
             <div className="flex items-center gap-4">
               <button className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted/50" aria-label="Like">
                 <Heart className="h-5 w-5" strokeWidth={1.5} />
@@ -145,19 +158,21 @@ export default function PoemDetail() {
             </div>
           </div>
 
-          {/* Description */}
-          <section className="mb-12">
-            <div className="flex items-center gap-2 mb-3">
-              <h2 className="text-xl font-bold">{isArabic ? "الوصف" : "Description"}</h2>
-              <Badge variant="secondary" className="bg-orange-500/15 text-orange-700 dark:text-orange-400 border-0">
-                {isArabic ? "(ليس متاحاً دائماً)" : "(Not always available)"}
-              </Badge>
-            </div>
-            <Input
-              placeholder={isArabic ? "أضف وصفاً لهذه القصيدة..." : "Add a description for this poem..."}
-              className="border-border"
-            />
-          </section>
+          {/* Description - commented out */}
+          {false && (
+            <section className="mb-12">
+              <div className="flex items-center gap-2 mb-3">
+                <h2 className="text-xl font-bold">{isArabic ? "الوصف" : "Description"}</h2>
+                <Badge variant="secondary" className="bg-orange-500/15 text-orange-700 dark:text-orange-400 border-0">
+                  {isArabic ? "(ليس متاحاً دائماً)" : "(Not always available)"}
+                </Badge>
+              </div>
+              <Input
+                placeholder={isArabic ? "أضف وصفاً لهذه القصيدة..." : "Add a description for this poem..."}
+                className="border-border"
+              />
+            </section>
+          )}
 
           {/* Comments */}
           <section className="mb-12">
@@ -216,7 +231,7 @@ export default function PoemDetail() {
               <div className="flex flex-wrap gap-3">
                 {otherPoems.length > 0 ? (
                   otherPoems.map((p) => (
-                    <Link key={p.id} href={`/poems/${p.slug}`}>
+                    <Link key={p.id} href={`/poems/${p.slug}${poet?.slug ? `?poet=${poet.slug}` : ""}`}>
                       <Button variant="outline" className="h-auto py-3 px-4 text-left font-normal">
                         {getLocalizedContent(p, language, "title")}
                       </Button>

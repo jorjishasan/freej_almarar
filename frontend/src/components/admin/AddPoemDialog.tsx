@@ -114,7 +114,7 @@ export function AddPoemDialog({
     mode: "onChange",
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append } = useFieldArray({
     control: form.control,
     name: "verses",
   });
@@ -214,16 +214,17 @@ export function AddPoemDialog({
       tags: data.tags,
     };
 
+    const slug = title.toLowerCase().replace(/\s+/g, "-");
     if (editingPoem) {
       updateMutation.mutate({
         id: editingPoem.id,
-        slug: editingPoem.slug,
+        slug,
         ...payload,
       });
     } else {
       createMutation.mutate({
         ...payload,
-        slug: title.toLowerCase().replace(/\s+/g, "-").replace(/[^\w\u0600-\u06FF-]+/g, "") + "-" + Date.now(),
+        slug,
       } as any);
     }
   };
@@ -438,19 +439,21 @@ export function AddPoemDialog({
                 />
               </div>
 
-              {/* Description */}
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel className="text-sm font-medium">Description <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Brief description..." {...field} rows={2} className="resize-none rounded-lg px-3 py-2 text-sm bg-muted/30" />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+              {/* Description - not persisted to backend */}
+              {false && (
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-sm font-medium">Description <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Brief description..." {...field} rows={2} className="resize-none rounded-lg px-3 py-2 text-sm bg-muted/30" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
 
             {/* Footer */}

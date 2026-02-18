@@ -31,7 +31,7 @@ export default function PoetPoems() {
       heroImage="/images/aerial-5.jpg"
       backLabel="Back to Poets"
       backLabelAr="العودة للشعراء"
-      backHref="/poets"
+      // backHref="/poets"
       showSearch={false}
     >
       {isLoading ? (
@@ -61,7 +61,7 @@ export default function PoetPoems() {
             return (
               <Link
                 key={poem.id}
-                href={`/poems/${poem.slug}`}
+                href={`/poems/${poem.slug}?poet=${slug}`}
                 className="group bg-card border border-border rounded-xl p-6 hover:shadow-lg hover:border-primary/30 transition-all block"
               >
                 <div className="flex items-start justify-between mb-3">
