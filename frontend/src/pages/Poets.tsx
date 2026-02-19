@@ -3,14 +3,6 @@ import { useLocation } from "wouter";
 import { SectionLayout } from "@/components/SectionLayout";
 import { trpc } from "@/lib/trpc";
 
-const samplePoets = [
-  { id: "1", nameEn: "Ahmad AlKendi AlMarar", nameAr: "أحمد الكندي المرر", locationEn: "Abu Dhabi", locationAr: "أبوظبي", poemsCount: 12, imageUrl: "/poets/poet1.png", slug: "" },
-  { id: "2", nameEn: "Mana Saeed Al Otaiba", nameAr: "مانع سعيد العتيبة", locationEn: "Abu Dhabi", locationAr: "أبوظبي", poemsCount: 24, imageUrl: "/poets/poet2.png", slug: "" },
-  { id: "3", nameEn: "Ahmad bin BaleeD AlMarar", nameAr: "أحمد بن بليد المرر", locationEn: "Abu Dhabi", locationAr: "أبوظبي", poemsCount: 9, imageUrl: "/poets/poet3.png", slug: "" },
-  { id: "4", nameEn: "Ali Bin Meswhat AlMarri", nameAr: "علي بن مسوات المري", locationEn: "Abu Dhabi", locationAr: "أبوظبي", poemsCount: 7, imageUrl: "/poets/poet4.png", slug: "" },
-  { id: "5", nameEn: "Hamad AlMarar", nameAr: "حمد المرر", locationEn: "Abu Dhabi", locationAr: "أبوظبي", poemsCount: 5, imageUrl: "/poets/poet2.png", slug: "" },
-];
-
 export default function Poets() {
   const { language } = useLanguage();
   const isArabic = language === "ar";
@@ -18,20 +10,16 @@ export default function Poets() {
   const { data: dbPoets, isLoading } = trpc.poets.getPublishedWithPoemCount.useQuery();
 
   const poets =
-    dbPoets && dbPoets.length > 0
-      ? dbPoets.map((p) => ({
-          id: String(p.id),
-          nameEn: p.nameEn,
-          nameAr: p.nameAr,
-          locationEn: p.originEn ?? "",
-          locationAr: p.originAr ?? "",
-          poemsCount: p.poemCount ?? 0,
-          imageUrl: p.profileImageUrl ?? undefined,
-          slug: p.slug,
-        }))
-      : samplePoets;
-
-  const displayPoets = isLoading ? samplePoets : poets;
+    dbPoets?.map((p) => ({
+      id: String(p.id),
+      nameEn: p.nameEn,
+      nameAr: p.nameAr,
+      locationEn: p.originEn ?? "",
+      locationAr: p.originAr ?? "",
+      poemsCount: p.poemCount ?? 0,
+      imageUrl: p.profileImageUrl ?? undefined,
+      slug: p.slug,
+    })) ?? [];
 
   return (
     <SectionLayout
@@ -43,7 +31,20 @@ export default function Poets() {
       showSearch={false}
     >
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-        {displayPoets.map((poet) => (
+        {isLoading ? (
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="bg-card border border-border rounded-xl overflow-hidden animate-pulse">
+              <div className="w-full aspect-[4/5] max-h-56 bg-muted" />
+              <div className="px-6 py-5 space-y-3">
+                <div className="h-4 bg-muted rounded w-3/4 mx-auto" />
+                <div className="h-3 bg-muted rounded w-1/2 mx-auto" />
+                <div className="h-px bg-border" />
+                <div className="h-4 bg-muted rounded w-1/3 mx-auto" />
+              </div>
+            </div>
+          ))
+        ) : (
+          poets.map((poet) => (
           <div
             key={poet.id}
             className="group relative bg-card text-card-foreground shadow-sm border border-border overflow-hidden rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl cursor-pointer"
@@ -87,7 +88,8 @@ export default function Poets() {
             {/* Subtle hover glow, theme-aware */}
             <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-b from-white/10 to-transparent dark:from-white/5" />
           </div>
-        ))}
+        ))
+        )}
       </div>
     </SectionLayout>
   );
