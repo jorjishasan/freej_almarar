@@ -130,27 +130,27 @@ export default function PoemDetail() {
             {title}
           </h1>
 
-          {/* Verses: two columns (right: 1,3 | left: 2,4) — RTL places first col on right */}
-          <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-12`} dir={isArabic ? "rtl" : "ltr"}>
-            <div className="space-y-6">
+          {/* Verses: Arabic order (verse 1 right, verse 2 left) for all languages */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 md:gap-x-16 gap-y-10 md:gap-y-12 mb-16">
+            <div className="space-y-0 md:col-start-2">
               {rightVerses.map((text, i) => (
-                <div key={i} className="space-y-2">
-                  <h3 className="text-sm font-bold text-muted-foreground">
+                <div key={i} className="py-5 md:py-6 space-y-2 border-b border-border/50 last:border-b-0">
+                  <h3 className="text-sm font-semibold text-muted-foreground tracking-wide">
                     {isArabic ? `بيت ${i * 2 + 1}` : `Verse ${i * 2 + 1}`}
                   </h3>
-                  <p className="text-lg leading-relaxed" dir="rtl" style={{ textAlign: "right" }}>
+                  <p className="text-lg md:text-xl leading-loose" dir="rtl" style={{ textAlign: "right" }}>
                     {text}
                   </p>
                 </div>
               ))}
             </div>
-            <div className="space-y-6">
+            <div className="space-y-0 md:col-start-1 md:row-start-1">
               {leftVerses.map((text, i) => (
-                <div key={i} className="space-y-2">
-                  <h3 className="text-sm font-bold text-muted-foreground">
+                <div key={i} className="py-5 md:py-6 space-y-2 border-b border-border/50 last:border-b-0">
+                  <h3 className="text-sm font-semibold text-muted-foreground tracking-wide">
                     {isArabic ? `بيت ${i * 2 + 2}` : `Verse ${i * 2 + 2}`}
                   </h3>
-                  <p className="text-lg leading-relaxed" dir="rtl" style={{ textAlign: "right" }}>
+                  <p className="text-lg md:text-xl leading-loose" dir="rtl" style={{ textAlign: "right" }}>
                     {text}
                   </p>
                 </div>
