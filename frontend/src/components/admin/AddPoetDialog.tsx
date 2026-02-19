@@ -221,7 +221,7 @@ export function AddPoetDialog({
       activeText: "text-blue-700 dark:text-blue-400",
     },
     published: {
-      label: "Published",
+      label: "Publish",
       dotClass: "bg-emerald-500",
       activeBg: "bg-emerald-500/15",
       activeText: "text-emerald-700 dark:text-emerald-400",
@@ -360,7 +360,7 @@ export function AddPoetDialog({
                 </div>
               </div>
 
-              {/* Row 2: Slug + Auto */}
+              {/* Slug - commented out
               <FormField
                 control={form.control}
                 name="slug"
@@ -379,6 +379,7 @@ export function AddPoetDialog({
                   </FormItem>
                 )}
               />
+              */}
 
               {/* Row 3: Bio */}
               <FormField
