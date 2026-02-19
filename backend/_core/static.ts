@@ -16,8 +16,11 @@ export function serveStatic(app: Express) {
   const distPath = path.resolve(import.meta.dirname, "../..", "frontend", "dist");
 
   if (!fs.existsSync(distPath)) {
-    console.warn(`[Static] Build directory not found: ${distPath}, skipping static serve`);
-    app.use("*", (_req, res) => res.status(404).send("Not found"));
+    // In production API-only mode, this is expected.
+    if (!ENV.isProduction) {
+      console.warn(`[Static] Build directory not found: ${distPath}, skipping static serve`);
+    }
+    app.use("*", (_req, res) => res.send("API Server Running"));
     return;
   }
 
