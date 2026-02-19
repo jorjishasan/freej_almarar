@@ -7,7 +7,18 @@ import * as db from "../db";
 import { ENV } from "./env";
 
 function getRedirectUri(req: Request): string {
+  // If request is proxied (e.g. via Netlify), use the forwarded host
+  const forwardedHost = req.headers["x-forwarded-host"];
+  const forwardedProto = req.headers["x-forwarded-proto"];
+  if (forwardedHost) {
+    const protocol = Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto || "https";
+    const host = Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost;
+    return `${protocol}://${host}`;
+  }
+
+  // Fallback to configured backend URL (e.g. Railway public domain)
   if (ENV.backendUrl) return ENV.backendUrl.replace(/\/$/, "");
+
   const protocol = req.headers["x-forwarded-proto"] || req.protocol || "http";
   const host = req.headers["x-forwarded-host"] || req.get("host") || "localhost:3000";
   return `${protocol}://${host}`;
