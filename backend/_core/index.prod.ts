@@ -41,25 +41,7 @@ async function startServer() {
   const app = express();
   app.set("trust proxy", 1);
 
-  // CORS: normalize origins (strip trailing slash) to avoid mismatch
-  const normalizeOrigin = (url: string) => url.replace(/\/$/, "");
-  const allowedOrigins = ENV.frontendUrl
-    ? ENV.frontendUrl.split(",").map((o) => normalizeOrigin(o.trim())).filter(Boolean)
-    : [];
-  app.use(
-    cors({
-      origin:
-        allowedOrigins.length > 0
-          ? (origin, cb) => {
-              const norm = origin ? normalizeOrigin(origin) : "";
-              const allowed = !norm || allowedOrigins.some((a) => a === norm || a === origin);
-              if (allowed) cb(null, origin || allowedOrigins[0]);
-              else cb(null, false);
-            }
-          : true,
-      credentials: true,
-    })
-  );
+  app.use(cors({ origin: true, credentials: true }));
 
   const server = createServer(app);
   app.use(express.json({ limit: "50mb" }));
