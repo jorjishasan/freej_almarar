@@ -249,7 +249,7 @@ export function AddPoemDialog({
   const statusConfig = {
     draft: { label: "Draft", dotClass: "bg-amber-500", activeBg: "bg-amber-500/15", activeText: "text-amber-700 dark:text-amber-400" },
     review: { label: "Review", dotClass: "bg-blue-500", activeBg: "bg-blue-500/15", activeText: "text-blue-700 dark:text-blue-400" },
-    published: { label: "Published", dotClass: "bg-emerald-500", activeBg: "bg-emerald-500/15", activeText: "text-emerald-700 dark:text-emerald-400" },
+    published: { label: "Publish", dotClass: "bg-emerald-500", activeBg: "bg-emerald-500/15", activeText: "text-emerald-700 dark:text-emerald-400" },
   } as const;
 
   return (
@@ -371,7 +371,7 @@ export function AddPoemDialog({
                             <FormControl>
                               <Input
                                 {...field}
-                                placeholder={`Verse ${idx + 1}`}
+                                tabIndex={idx + 1}
                                 className="h-9 rounded-lg px-3 bg-muted/30"
                               />
                             </FormControl>

@@ -98,16 +98,20 @@ export function AddPoetDialog({
   const profileImageUrl = form.watch("profileImageUrl");
 
   useEffect(() => {
-    if (!open || !editingPoem) return;
-    form.reset({
-      name: editingPoem.nameEn ?? editingPoem.nameAr ?? "",
-      slug: editingPoem.slug ?? "",
-      origin: editingPoem.originEn ?? editingPoem.originAr ?? "",
-      bio: editingPoem.bioEn ?? editingPoem.bioAr ?? "",
-      profileImageUrl: editingPoem.profileImageUrl ?? "",
-      status: (editingPoem.status === "published" || editingPoem.status === "review" ? editingPoem.status : "draft") as "draft" | "review" | "published",
-      isFeatured: editingPoem.isFeatured ?? false,
-    });
+    if (!open) return;
+    form.reset(
+      editingPoem
+        ? {
+            name: editingPoem.nameEn ?? editingPoem.nameAr ?? "",
+            slug: editingPoem.slug ?? "",
+            origin: editingPoem.originEn ?? editingPoem.originAr ?? "",
+            bio: editingPoem.bioEn ?? editingPoem.bioAr ?? "",
+            profileImageUrl: editingPoem.profileImageUrl ?? "",
+            status: (editingPoem.status === "published" || editingPoem.status === "review" ? editingPoem.status : "draft") as "draft" | "review" | "published",
+            isFeatured: editingPoem.isFeatured ?? false,
+          }
+        : { name: "", slug: "", origin: "", bio: "", profileImageUrl: "", status: "draft", isFeatured: false }
+    );
   }, [open, editingPoem, form]);
 
   const handleUpload = useCallback(
