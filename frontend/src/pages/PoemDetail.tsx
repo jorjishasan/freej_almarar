@@ -131,7 +131,7 @@ export default function PoemDetail() {
           </h1>
 
           {/* Verses: Arabic order (verse 1 right, verse 2 left) for all languages */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 md:gap-x-16 gap-y-10 md:gap-y-12 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 md:gap-x-16 gap-y-10 md:gap-y-12 mb-20 md:mb-24">
             <div className="space-y-0 md:col-start-2">
               {rightVerses.map((text, i) => (
                 <div key={i} className="py-5 md:py-6 space-y-2 border-b border-border/50 last:border-b-0">
