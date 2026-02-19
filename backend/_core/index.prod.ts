@@ -74,7 +74,7 @@ async function startServer() {
       cookie: {
         httpOnly: true,
         secure: ENV.isProduction,
-        sameSite: ENV.frontendUrl ? "none" : "lax",
+        sameSite: "lax", // Always lax because Netlify proxies /api making it same-origin
         maxAge: 365 * 24 * 60 * 60 * 1000,
       },
     })

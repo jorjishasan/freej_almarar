@@ -38,16 +38,27 @@ queryClient.getMutationCache().subscribe(event => {
   }
 });
 
+const API_TIMEOUT_MS = 25_000;
+
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
       url: import.meta.env.VITE_API_URL || "/api/trpc",
       transformer: superjson,
       fetch(input, init) {
-        return globalThis.fetch(input, {
-          ...(init ?? {}),
-          credentials: "include",
+        const ctrl = new AbortController();
+        const timeout = setTimeout(() => ctrl.abort(), API_TIMEOUT_MS);
+        init?.signal?.addEventListener?.("abort", () => {
+          clearTimeout(timeout);
+          ctrl.abort();
         });
+        return globalThis
+          .fetch(input, {
+            ...(init ?? {}),
+            credentials: "include",
+            signal: ctrl.signal,
+          })
+          .finally(() => clearTimeout(timeout));
       },
     }),
   ],

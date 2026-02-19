@@ -1,0 +1,5 @@
+# Proxy API requests to Railway backend (keeps cookies same-origin for Safari/Brave)
+/api/*  https://freejalmarar-production.up.railway.app/api/:splat  200
+
+# SPA fallback - must be last
+/*     /index.html   200

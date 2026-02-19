@@ -7,7 +7,10 @@ import * as db from "../db";
 import { ENV } from "./env";
 
 function getRedirectUri(req: Request): string {
-  // If request is proxied (e.g. via Netlify), use the forwarded host
+  // If explicitly configured, trust it (crucial for Netlify proxy which might strip forwarded headers)
+  if (ENV.frontendUrl) return ENV.frontendUrl.replace(/\/$/, "");
+
+  // If request is proxied, use the forwarded host
   const forwardedHost = req.headers["x-forwarded-host"];
   const forwardedProto = req.headers["x-forwarded-proto"];
   if (forwardedHost) {
