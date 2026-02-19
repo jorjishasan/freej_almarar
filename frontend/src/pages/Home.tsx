@@ -63,14 +63,15 @@ const tier1Collections = [
     path: "/poets",
     image: "/images/aerial-2.jpg",
   },
-  {
-    title: "Poems",
-    titleAr: "القصائد",
-    description: "Poetry and oral traditions",
-    descriptionAr: "الشعر والتراث الشفهي",
-    path: "/poems",
-    image: "/images/aerial-1.jpg",
-  },
+  // Poems - commented out
+  // {
+  //   title: "Poems",
+  //   titleAr: "القصائد",
+  //   description: "Poetry and oral traditions",
+  //   descriptionAr: "الشعر والتراث الشفهي",
+  //   path: "/poems",
+  //   image: "/images/aerial-1.jpg",
+  // },
 ];
 
 // Tier 2: Secondary collections - 4 cols desktop, smaller cards
